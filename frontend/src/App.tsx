@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage'
 import RoutinesPage from './pages/RoutinesPage'
 import WorkoutsPage from './pages/WorkoutsPage'
 import AdminPage from './pages/AdminPage'
+import RoutineFormPage from './pages/RoutineFormPage'
 
 function App() {
   return (
@@ -29,12 +30,29 @@ function App() {
                 <RoutinesPage />
               </ProtectedRoute>
             } />
+            <Route path="/routines/new" element={
+              <ProtectedRoute>
+                <RoutineFormPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/routines/:id" element={
+              <ProtectedRoute>
+                <RoutineFormPage />
+              </ProtectedRoute>
+            } />
             <Route path="/workouts" element={
               <ProtectedRoute>
                 <WorkoutsPage />
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={<ProtectedRoute><AdminPage/></ProtectedRoute>} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Layout>
       </Router>

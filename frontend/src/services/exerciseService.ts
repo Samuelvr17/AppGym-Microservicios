@@ -53,6 +53,17 @@ export const exerciseService = {
     }
   },
 
+  async search(query: string, params?: { page?: number; limit?: number }): Promise<Exercise[]> {
+    const trimmedQuery = query.trim()
+    const { exercises } = await exerciseService.getExercises({
+      q: trimmedQuery || undefined,
+      page: params?.page,
+      limit: params?.limit,
+    })
+
+    return exercises
+  },
+
   async getExercise(id: number): Promise<Exercise> {
     const response = await exerciseApi.get<ApiResponse<Exercise>>(`/api/exercises/${id}`)
     return response.data.data
