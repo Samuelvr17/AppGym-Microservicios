@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import RoutinesPage from './pages/RoutinesPage'
 import WorkoutsPage from './pages/WorkoutsPage'
+import AdminPage from './pages/AdminPage'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
                 <WorkoutsPage />
               </ProtectedRoute>
             } />
+            <Route path="/admin" element={<ProtectedRoute><AdminPage/></ProtectedRoute>} />
           </Routes>
         </Layout>
       </Router>
