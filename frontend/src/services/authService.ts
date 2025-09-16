@@ -1,15 +1,15 @@
 import { authApi } from './api'
-import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types'
+import type { AuthData, AuthResponse, LoginRequest, RegisterRequest, User } from '../types'
 
 export const authService = {
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await authApi.post<AuthResponse>('/api/auth/login', credentials)
-    return response.data
+  async login(credentials: LoginRequest): Promise<AuthData> {
+    const { data: responseData } = await authApi.post<AuthResponse>('/api/auth/login', credentials)
+    return responseData.data
   },
 
-  async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const response = await authApi.post<AuthResponse>('/api/auth/register', userData)
-    return response.data
+  async register(userData: RegisterRequest): Promise<AuthData> {
+    const { data: responseData } = await authApi.post<AuthResponse>('/api/auth/register', userData)
+    return responseData.data
   },
 
   async getProfile(): Promise<User> {

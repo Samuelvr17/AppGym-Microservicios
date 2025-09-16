@@ -6,9 +6,16 @@ export interface User {
   createdAt: string
 }
 
-export interface AuthResponse {
+export interface AuthData {
   token: string
   user: User
+}
+
+export interface AuthResponse {
+  success: boolean
+  message: string
+  data: AuthData
+  timestamp: string
 }
 
 export interface LoginRequest {
