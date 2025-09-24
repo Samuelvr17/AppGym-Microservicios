@@ -10,6 +10,7 @@ import RoutinesPage from './pages/RoutinesPage'
 import WorkoutsPage from './pages/WorkoutsPage'
 import AdminPage from './pages/AdminPage'
 import RoutineFormPage from './pages/RoutineFormPage'
+import WorkoutStartPage from './pages/WorkoutStartPage'
 
 function App() {
   return (
@@ -40,6 +41,14 @@ function App() {
                 <RoutineFormPage />
               </ProtectedRoute>
             } />
+            <Route
+              path="/workout/start/:routineId"
+              element={
+                <ProtectedRoute>
+                  <WorkoutStartPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/workouts" element={
               <ProtectedRoute>
                 <WorkoutsPage />

@@ -66,7 +66,7 @@ fitness-app/
 - ✅ Ver la lista de rutinas que ha creado en su pantalla principal.
 - ✅ Crear rutinas personalizadas: buscar ejercicios por nombre o alias, añadirlos a la rutina con campos de series, rango de repeticiones, técnica (dropset, myo-reps, fallo, etc.).
 - ✅ Editar rutinas existentes.
-- ✅ Iniciar una rutina: registrar pesos y repeticiones de cada serie, ver el temporizador, y consultar el video del ejercicio.
+- ✅ Iniciar una rutina: registrar pesos y repeticiones de cada serie, controlar descansos con un temporizador integrado y guardar el avance en tiempo real.
 - ✅ Al terminar, guardar el entrenamiento en su historial.
 - ✅ Ver un historial de entrenamientos pasados con todos los datos registrados.
 
@@ -129,36 +129,36 @@ fitness-app/
 ## 🚀 Plan de Implementación
 
 ### Fase 1: Infraestructura Base
-- [ ] Configurar la estructura de carpetas del proyecto (`fitness-app/`, `frontend/`, `services/`, etc.).
-- [ ] Configurar PostgreSQL y crear bases de datos separadas para cada microservicio.
-- [ ] Inicializar el proyecto de Vite + React + TypeScript en `frontend/`.
-- [ ] Inicializar cada microservicio con Node.js y Express, incluyendo sus `package.json` y archivos `.env`.
+- [x] Configurar la estructura de carpetas del proyecto (`fitness-app/`, `frontend/`, `services/`, etc.).
+- [x] Configurar PostgreSQL y crear bases de datos separadas para cada microservicio.
+- [x] Inicializar el proyecto de Vite + React + TypeScript en `frontend/`.
+- [x] Inicializar cada microservicio con Node.js y Express, incluyendo sus `package.json` y archivos `.env`.
 
 ### Fase 2: Auth Service
-- [ ] Implementar modelos de usuario y lógica de autenticación.
-- [ ] Desarrollar los endpoints de registro y login con generación de JWT.
-- [ ] Crear el middleware de autenticación para validar JWTs.
+- [x] Implementar modelos de usuario y lógica de autenticación.
+- [x] Desarrollar los endpoints de registro y login con generación de JWT.
+- [x] Crear el middleware de autenticación para validar JWTs.
 
 ### Fase 3: Exercise Service
-- [ ] Implementar el CRUD de ejercicios, asegurando que solo los administradores puedan crearlos, editarlos o eliminarlos.
-- [ ] Desarrollar la lógica para manejar alias y la funcionalidad de búsqueda.
-- [ ] Implementar la subida y el servicio de videos demostrativos.
+- [x] Implementar el CRUD de ejercicios, asegurando que solo los administradores puedan crearlos, editarlos o eliminarlos.
+- [x] Desarrollar la lógica para manejar alias y la funcionalidad de búsqueda.
+- [x] Implementar la subida y el servicio de videos demostrativos.
 
 ### Fase 4: Routine Service
-- [ ] Implementar el CRUD de rutinas, asegurando la propiedad del usuario.
-- [ ] Desarrollar la lógica para asociar ejercicios con parámetros específicos de la rutina.
+- [x] Implementar el CRUD de rutinas, asegurando la propiedad del usuario.
+- [x] Desarrollar la lógica para asociar ejercicios con parámetros específicos de la rutina.
 
 ### Fase 5: Workout Service
-- [ ] Implementar la funcionalidad para registrar entrenamientos completados.
-- [ ] Desarrollar los endpoints para consultar el historial de entrenamientos y obtener detalles específicos.
-- [ ] Añadir la lógica para estadísticas básicas.
+- [x] Implementar la funcionalidad para registrar entrenamientos completados.
+- [x] Desarrollar los endpoints para consultar el historial de entrenamientos y obtener detalles específicos.
+- [x] Añadir la lógica para estadísticas básicas.
 
 ### Fase 6: Frontend
-- [ ] Desarrollar las páginas de autenticación (registro e inicio de sesión).
-- [ ] Crear el dashboard principal que muestre las rutinas del usuario.
-- [ ] Implementar la interfaz para crear y editar rutinas.
-- [ ] Desarrollar la pantalla de entrenamiento en vivo con temporizador y reproducción de video.
-- [ ] Crear la vista del historial de entrenamientos.
+- [x] Desarrollar las páginas de autenticación (registro e inicio de sesión).
+- [x] Crear el dashboard principal que muestre las rutinas del usuario.
+- [x] Implementar la interfaz para crear y editar rutinas.
+- [x] Desarrollar la pantalla de entrenamiento en vivo con temporizador y registro de series.
+- [x] Crear la vista del historial de entrenamientos.
 
 ### Fase 7: Integración y Refinamiento
 - [ ] Establecer la comunicación adecuada entre los microservicios (llamadas HTTP internas).
@@ -313,17 +313,14 @@ workout_sets (
 ## 🚦 Estados de Desarrollo
 
 ### ✅ Completado
-- [x] Documentación y planificación inicial
+- [x] Fase 1: Infraestructura Base
+- [x] Fase 2: Auth Service
+- [x] Fase 3: Exercise Service
+- [x] Fase 4: Routine Service
+- [x] Fase 5: Workout Service
+- [x] Fase 6: Frontend
 
 ### 🔄 En Progreso
-- [ ] Fase 1: Infraestructura Base
-
-### ⏳ Pendiente
-- [ ] Fase 2: Auth Service
-- [ ] Fase 3: Exercise Service
-- [ ] Fase 4: Routine Service
-- [ ] Fase 5: Workout Service
-- [ ] Fase 6: Frontend
 - [ ] Fase 7: Integración y Refinamiento
 
 ---
