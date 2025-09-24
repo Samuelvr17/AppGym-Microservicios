@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import RoutinesPage from './pages/RoutinesPage'
 import WorkoutsPage from './pages/WorkoutsPage'
+import WorkoutDetailPage from './pages/WorkoutDetailPage'
 import AdminPage from './pages/AdminPage'
 import RoutineFormPage from './pages/RoutineFormPage'
 import WorkoutStartPage from './pages/WorkoutStartPage'
@@ -54,6 +55,14 @@ function App() {
                 <WorkoutsPage />
               </ProtectedRoute>
             } />
+            <Route
+              path="/workouts/:id"
+              element={
+                <ProtectedRoute>
+                  <WorkoutDetailPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin"
               element={
