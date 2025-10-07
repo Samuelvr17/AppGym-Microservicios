@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import VideoModal from '../components/VideoModal'
 import { routineService } from '../services/routineService'
 import { workoutService } from '../services/workoutService'
 import type { Routine, RoutineExercise, CreateWorkoutRequest } from '../types'
@@ -20,6 +21,8 @@ type ExerciseWorkoutForm = {
   exerciseId: number
   exerciseName: string
   targetRange?: string
+  exerciseDescription?: string
+  exerciseVideoPath?: string
   sets: WorkoutSetForm[]
 }
 
@@ -68,6 +71,12 @@ const WorkoutStartPage: React.FC = () => {
   const [startedAt] = useState(() => formatDateTimeLocal(new Date()))
   const [notes, setNotes] = useState('')
 
+  const [videoModalData, setVideoModalData] = useState<{
+    name: string
+    videoPath: string
+    description?: string
+  } | null>(null)
+
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [completedAt, setCompletedAt] = useState<Date | null>(null)
@@ -90,6 +99,8 @@ const WorkoutStartPage: React.FC = () => {
           data.exercises.map((exercise) => ({
             exerciseId: exercise.exerciseId,
             exerciseName: exercise.exerciseName,
+            exerciseDescription: exercise.exerciseDescription,
+            exerciseVideoPath: exercise.exerciseVideoPath,
             targetRange: getTargetRange(exercise),
             sets: Array.from({ length: exercise.sets }, () => ({
               weight: '',
@@ -604,8 +615,16 @@ const WorkoutStartPage: React.FC = () => {
               </form>
             )}
           </div>
-        </div>
       </div>
+
+      <VideoModal
+        isOpen={Boolean(videoModalData)}
+        title={videoModalData?.name ?? ''}
+        videoPath={videoModalData?.videoPath ?? ''}
+        description={videoModalData?.description}
+        onClose={handleCloseVideo}
+      />
+    </div>
   )
 }
 

@@ -51,6 +51,8 @@ export interface RoutineExercise {
   id: number
   exerciseId: number
   exerciseName: string
+  exerciseDescription?: string
+  exerciseVideoPath?: string
   sets: number
   repRangeMin?: number
   repRangeMax?: number
