@@ -5,22 +5,45 @@ import { routineService } from '../services/routineService'
 import { workoutService } from '../services/workoutService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
-import { 
-  User, 
-  Activity, 
-  Target, 
-  TrendingUp, 
-  Calendar, 
-  Clock, 
-  Dumbbell,
+import {
+  User,
+  Activity,
+  Target,
+  TrendingUp,
+  Calendar,
+  Clock,
   Plus,
   Play,
   BarChart3
 } from 'lucide-react'
 
+type WorkoutStats = {
+  totalWorkouts: number
+  completedWorkouts: number
+  incompleteWorkouts: number
+  totalSets: number
+  totalReps: number
+  totalWeightLifted: number
+  avgDurationMinutes: number
+  recentWorkouts: number
+  period: string
+}
+
+type RoutineStats = {
+  totalRoutines: number
+  totalExercises: number
+  avgExercisesPerRoutine: number | string
+  avgSetsPerExercise: number | string
+}
+
+type DashboardStats = {
+  workouts: WorkoutStats | null
+  routines: RoutineStats | null
+}
+
 const DashboardPage: React.FC = () => {
   const { user } = useAuth()
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentWorkouts, setRecentWorkouts] = useState<any[]>([])
   const [recentRoutines, setRecentRoutines] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -56,11 +79,25 @@ const DashboardPage: React.FC = () => {
     }
   }
 
-  const formatDuration = (seconds?: number) => {
+  const formatDuration = (seconds?: number | null) => {
     if (!seconds) return 'N/A'
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  }
+
+  const formatAverageDuration = (minutes?: number | null) => {
+    if (minutes === undefined || minutes === null) return 'N/A'
+    if (minutes <= 0) return 'N/A'
+    const totalSeconds = minutes * 60
+    return formatDuration(totalSeconds)
+  }
+
+  const displayNumber = (value?: number | null) => {
+    if (value === undefined || value === null) {
+      return '—'
+    }
+    return value
   }
 
   if (isLoading) {
@@ -89,20 +126,20 @@ const DashboardPage: React.FC = () => {
       {error && <ErrorMessage message={error} onRetry={loadDashboardData} />}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Total Workouts */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Entrenamientos</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats?.workouts?.totalWorkouts || 0}
+                {displayNumber(stats?.workouts?.totalWorkouts)}
               </p>
             </div>
             <Activity className="h-8 w-8 text-blue-600" />
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            {stats?.workouts?.completedWorkouts || 0} completados
+            {displayNumber(stats?.workouts?.completedWorkouts)} completados
           </p>
         </div>
 
@@ -112,29 +149,13 @@ const DashboardPage: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Rutinas</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats?.routines?.totalRoutines || 0}
+                {displayNumber(stats?.routines?.totalRoutines as number | null)}
               </p>
             </div>
             <Target className="h-8 w-8 text-green-600" />
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            {stats?.routines?.totalExercises || 0} ejercicios totales
-          </p>
-        </div>
-
-        {/* Total Weight */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Peso Total</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.workouts?.totalWeightLifted?.toFixed(0) || 0} kg
-              </p>
-            </div>
-            <Dumbbell className="h-8 w-8 text-purple-600" />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats?.workouts?.totalReps || 0} repeticiones
+            {displayNumber(stats?.routines?.totalExercises as number | null)} ejercicios totales
           </p>
         </div>
 
@@ -144,13 +165,29 @@ const DashboardPage: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Duración Promedio</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats?.workouts?.avgDurationMinutes || 0}m
+                {formatAverageDuration(stats?.workouts?.avgDurationMinutes)}
               </p>
             </div>
             <Clock className="h-8 w-8 text-orange-600" />
           </div>
           <p className="text-xs text-gray-500 mt-2">
             Por entrenamiento
+          </p>
+        </div>
+
+        {/* Total Sets */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Series Totales</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {displayNumber(stats?.workouts?.totalSets)}
+              </p>
+            </div>
+            <BarChart3 className="h-8 w-8 text-purple-600" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {displayNumber(stats?.workouts?.totalReps)} repeticiones registradas
           </p>
         </div>
       </div>
