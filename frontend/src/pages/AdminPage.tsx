@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Edit, Plus, Save, Search, Trash2, X } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
@@ -27,9 +27,12 @@ const AdminPage: React.FC = () => {
   const [formState, setFormState] = useState<ExerciseFormState>(defaultFormState)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false)
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const videoInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -60,6 +63,10 @@ const AdminPage: React.FC = () => {
     setSelectedExercise(null)
     setFormState(defaultFormState)
     setFormError('')
+    setVideoFile(null)
+    if (videoInputRef.current) {
+      videoInputRef.current.value = ''
+    }
   }
 
   const parseAliases = (aliasesValue: string) =>
@@ -86,18 +93,26 @@ const AdminPage: React.FC = () => {
 
     try {
       setIsSubmitting(true)
-      if (selectedExercise) {
-        await exerciseService.updateExercise(selectedExercise.id, payload)
-      } else {
-        await exerciseService.createExercise(payload)
+      const savedExercise = selectedExercise
+        ? await exerciseService.updateExercise(selectedExercise.id, payload)
+        : await exerciseService.createExercise(payload)
+
+      if (videoFile) {
+        setIsUploadingVideo(true)
+        await exerciseService.uploadExerciseVideo(savedExercise.id, videoFile)
+        setIsUploadingVideo(false)
       }
+
       await loadExercises()
       resetForm()
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Error al guardar el ejercicio'
+      const message =
+        err.response?.data?.message ||
+        (isUploadingVideo ? 'Error al subir el video' : 'Error al guardar el ejercicio')
       setFormError(message)
     } finally {
       setIsSubmitting(false)
+      setIsUploadingVideo(false)
     }
   }
 
@@ -109,7 +124,16 @@ const AdminPage: React.FC = () => {
       videoPath: exercise.videoPath || '',
       aliases: exercise.aliases.join(', '),
     })
+    setVideoFile(null)
+    if (videoInputRef.current) {
+      videoInputRef.current.value = ''
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleVideoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null
+    setVideoFile(file)
   }
 
   const handleDelete = async (exercise: Exercise) => {
@@ -249,6 +273,23 @@ const AdminPage: React.FC = () => {
               </div>
 
               <div>
+                <label htmlFor="videoFile" className="block text-sm font-medium text-gray-700">
+                  Subir video (opcional)
+                </label>
+                <input
+                  id="videoFile"
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoFileChange}
+                  className="input-field"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si cargas un archivo, reemplazará al video existente. También puedes usar solo la URL.
+                </p>
+              </div>
+
+              <div>
                 <label htmlFor="aliases" className="block text-sm font-medium text-gray-700">
                   Aliases
                 </label>
@@ -270,16 +311,26 @@ const AdminPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploadingVideo}
                 className="btn-primary w-full flex items-center justify-center"
               >
-                {isSubmitting ? (
+                {isSubmitting || isUploadingVideo ? (
                   <LoadingSpinner size="sm" className="mr-2" />
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                {selectedExercise ? 'Guardar cambios' : 'Crear ejercicio'}
+                {isUploadingVideo
+                  ? 'Subiendo video...'
+                  : selectedExercise
+                    ? 'Guardar cambios'
+                    : 'Crear ejercicio'}
               </button>
+              {isUploadingVideo && (
+                <p className="flex items-center text-xs text-gray-500">
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Procesando el video, por favor espera...
+                </p>
+              )}
             </form>
           </div>
 
@@ -316,7 +367,7 @@ const AdminPage: React.FC = () => {
                         )}
                         {exercise.videoPath && (
                           <a
-                            href={exercise.videoPath}
+                            href={exerciseService.getExerciseVideoUrl(exercise.videoPath) ?? undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center text-sm text-primary-600 hover:text-primary-700"
