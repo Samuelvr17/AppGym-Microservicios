@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import { routineService } from '../services/routineService'
@@ -70,6 +70,9 @@ const WorkoutStartPage: React.FC = () => {
 
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
+  const [completedAt, setCompletedAt] = useState<Date | null>(null)
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null)
+  const workoutCompleted = completedAt !== null
 
   useEffect(() => {
     if (!routineId) {
@@ -136,6 +139,25 @@ const WorkoutStartPage: React.FC = () => {
   const handleTimerReset = () => {
     setIsTimerRunning(false)
     setTimerSeconds(0)
+  }
+
+  const handleWorkoutComplete = () => {
+    const startedAtDate = new Date(startedAt)
+    if (Number.isNaN(startedAtDate.getTime())) {
+      setFormError('La fecha de inicio no es válida.')
+      return
+    }
+
+    const finishedAt = new Date()
+    const durationInSeconds = Math.max(
+      0,
+      Math.round((finishedAt.getTime() - startedAtDate.getTime()) / 1000)
+    )
+
+    setIsTimerRunning(false)
+    setFormError('')
+    setCompletedAt(finishedAt)
+    setDurationSeconds(durationInSeconds)
   }
 
   const handleSetFieldChange = <K extends keyof WorkoutSetForm>(
@@ -285,12 +307,22 @@ const WorkoutStartPage: React.FC = () => {
 
     const startedAtISO = startedAtDate.toISOString()
 
+    if (!completedAt) {
+      setFormError('Finaliza el entrenamiento para registrar la hora de término.')
+      return
+    }
+
+    const completedAtISO = completedAt.toISOString()
+    const totalDurationSeconds =
+      durationSeconds ??
+      Math.max(0, Math.round((completedAt.getTime() - startedAtDate.getTime()) / 1000))
+
     const payload: CreateWorkoutRequest = {
       routineId: routine.id,
       routineName: routine.name,
       startedAt: startedAtISO,
-      completedAt: undefined,
-      duration: undefined,
+      completedAt: completedAtISO,
+      duration: totalDurationSeconds,
       notes: notes.trim() ? notes.trim() : undefined,
       sets: flattenedSets
     }
@@ -299,6 +331,9 @@ const WorkoutStartPage: React.FC = () => {
       setIsSubmitting(true)
       setFormError('')
       await workoutService.createWorkout(payload)
+      handleTimerReset()
+      setCompletedAt(null)
+      setDurationSeconds(null)
       navigate('/workouts')
     } catch (err: any) {
       const message = err?.response?.data?.message || 'No se pudo guardar el entrenamiento.'
@@ -355,78 +390,91 @@ const WorkoutStartPage: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <Timer className="h-5 w-5 text-primary-600 mr-2" />
-                  <h2 className="text-lg font-semibold text-gray-900">Temporizador de descanso</h2>
-                </div>
-                <span className="font-mono text-xl text-gray-800">{formatSeconds(timerSeconds)}</span>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Timer className="h-5 w-5 text-primary-600 mr-2" />
+                <h2 className="text-lg font-semibold text-gray-900">Temporizador de descanso</h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleTimerStart}
-                  className="btn-primary flex items-center text-sm"
-                  disabled={isTimerRunning}
-                >
-                  <Play className="h-4 w-4 mr-1" />
-                  Iniciar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleTimerPause}
-                  className="btn-secondary flex items-center text-sm"
-                  disabled={!isTimerRunning}
-                >
-                  <Pause className="h-4 w-4 mr-1" />
-                  Pausar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleTimerReset}
-                  className="btn-secondary flex items-center text-sm"
-                >
-                  <RotateCcw className="h-4 w-4 mr-1" />
-                  Reiniciar
-                </button>
-              </div>
+              <span className="font-mono text-xl text-gray-800">{formatSeconds(timerSeconds)}</span>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleTimerStart}
+                className="btn-primary flex items-center text-sm"
+                disabled={isTimerRunning}
+              >
+                <Play className="h-4 w-4 mr-1" />
+                Iniciar
+              </button>
+              <button
+                type="button"
+                onClick={handleTimerPause}
+                className="btn-secondary flex items-center text-sm"
+                disabled={!isTimerRunning}
+              >
+                <Pause className="h-4 w-4 mr-1" />
+                Pausar
+              </button>
+              <button
+                type="button"
+                onClick={handleTimerReset}
+                className="btn-secondary flex items-center text-sm"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Reiniciar
+              </button>
+              <button
+                type="button"
+                onClick={handleWorkoutComplete}
+                className="btn-primary flex items-center text-sm"
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                {workoutCompleted ? 'Actualizar finalización' : 'Finalizar entrenamiento'}
+              </button>
+            </div>
+            {durationSeconds !== null && completedAt && (
+              <p className="mt-3 text-sm text-green-700">
+                Duración registrada: {formatSeconds(durationSeconds)} · Fin: {completedAt.toLocaleString()}
+              </p>
+            )}
+          </div>
 
-            {exercises.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                <p className="text-gray-600">Esta rutina no tiene ejercicios configurados.</p>
-                <Link
-                  to={`/routines/${routine.id}`}
-                  className="btn-primary inline-flex items-center text-sm mt-4"
-                >
-                  Configurar rutina
-                </Link>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {exercises.map((exercise, exerciseIndex) => (
-                  <div key={exercise.exerciseId} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">{exercise.exerciseName}</h2>
-                        <div className="text-sm text-gray-500 mt-1 space-x-3">
-                          {exercise.targetRange && <span>Objetivo: {exercise.targetRange}</span>}
-                          <span>
-                            Técnica inicial:{' '}
-                            <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
-                          </span>
-                        </div>
+          {exercises.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-6 text-center">
+              <p className="text-gray-600">Esta rutina no tiene ejercicios configurados.</p>
+              <Link
+                to={`/routines/${routine.id}`}
+                className="btn-primary inline-flex items-center text-sm mt-4"
+              >
+                Configurar rutina
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {exercises.map((exercise, exerciseIndex) => (
+                <div key={exercise.exerciseId} className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">{exercise.exerciseName}</h2>
+                      <div className="text-sm text-gray-500 mt-1 space-x-3">
+                        {exercise.targetRange && <span>Objetivo: {exercise.targetRange}</span>}
+                        <span>
+                          Técnica inicial:{' '}
+                          <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
+                        </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddSet(exerciseIndex)}
-                        className="btn-secondary flex items-center text-sm"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Añadir serie
-                      </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddSet(exerciseIndex)}
+                      className="btn-secondary flex items-center text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Añadir serie
+                    </button>
+                  </div>
 
                     <div className="overflow-x-auto -mx-4 sm:mx-0">
                       <table className="min-w-full divide-y divide-gray-200">
