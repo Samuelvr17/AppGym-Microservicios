@@ -1,29 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw,
-  Save,
-  Timer,
-  Trash2
-} from 'lucide-react'
+import { ArrowLeft, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import { routineService } from '../services/routineService'
 import { workoutService } from '../services/workoutService'
 import type { Routine, RoutineExercise, CreateWorkoutRequest } from '../types'
-
-const TECHNIQUE_OPTIONS: RoutineExercise['technique'][] = [
-  'normal',
-  'dropset',
-  'myo-reps',
-  'failure',
-  'rest-pause'
-]
 
 type Technique = RoutineExercise['technique']
 
@@ -83,10 +65,7 @@ const WorkoutStartPage: React.FC = () => {
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
 
-  const [startedAt, setStartedAt] = useState(() => formatDateTimeLocal(new Date()))
-  const [markCompleted, setMarkCompleted] = useState(false)
-  const [completedAt, setCompletedAt] = useState('')
-  const [durationMinutes, setDurationMinutes] = useState('')
+  const [startedAt] = useState(() => formatDateTimeLocal(new Date()))
   const [notes, setNotes] = useState('')
 
   const [timerSeconds, setTimerSeconds] = useState(0)
@@ -111,7 +90,7 @@ const WorkoutStartPage: React.FC = () => {
             targetRange: getTargetRange(exercise),
             sets: Array.from({ length: exercise.sets }, () => ({
               weight: '',
-              reps: String(exercise.repRangeMin ?? exercise.repRangeMax ?? 10),
+              reps: '',
               technique: exercise.technique,
               restTime:
                 exercise.restTime !== null && exercise.restTime !== undefined
@@ -205,7 +184,7 @@ const WorkoutStartPage: React.FC = () => {
             ...exercise.sets,
             {
               weight: '',
-              reps: lastSet?.reps ?? String(routine?.exercises[exIdx]?.repRangeMin ?? 10),
+              reps: '',
               technique: lastSet?.technique ?? (routine?.exercises[exIdx]?.technique ?? 'normal'),
               restTime: lastSet?.restTime ??
                 (routine?.exercises[exIdx]?.restTime !== null && routine?.exercises[exIdx]?.restTime !== undefined
@@ -235,15 +214,6 @@ const WorkoutStartPage: React.FC = () => {
         }
       })
     )
-  }
-
-  const handleMarkCompleted = (checked: boolean) => {
-    setMarkCompleted(checked)
-    if (checked) {
-      setCompletedAt((prev) => prev || formatDateTimeLocal(new Date()))
-    } else {
-      setCompletedAt('')
-    }
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -313,51 +283,14 @@ const WorkoutStartPage: React.FC = () => {
       return
     }
 
-    let completedAtISO: string | undefined
-    if (markCompleted && completedAt) {
-      const completedAtDate = new Date(completedAt)
-      if (Number.isNaN(completedAtDate.getTime())) {
-        setFormError('La fecha de finalización no es válida.')
-        return
-      }
-      completedAtISO = completedAtDate.toISOString()
-
-      if (completedAtDate.getTime() < startedAtDate.getTime()) {
-        setFormError('La fecha de finalización no puede ser anterior al inicio.')
-        return
-      }
-    }
-
     const startedAtISO = startedAtDate.toISOString()
-
-    if (markCompleted && completedAtISO && new Date(completedAtISO) < new Date(startedAtISO)) {
-      setFormError('La fecha de finalización no puede ser anterior al inicio.')
-      return
-    }
-
-    let durationSeconds: number | undefined
-    if (durationMinutes.trim()) {
-      const minutesValue = Number(durationMinutes)
-      if (!Number.isFinite(minutesValue) || minutesValue <= 0) {
-        setFormError('La duración debe ser un número positivo en minutos.')
-        return
-      }
-      durationSeconds = Math.round(minutesValue * 60)
-    } else if (markCompleted && completedAtISO) {
-      const diffSeconds = Math.round(
-        (new Date(completedAtISO).getTime() - new Date(startedAtISO).getTime()) / 1000
-      )
-      if (diffSeconds > 0) {
-        durationSeconds = diffSeconds
-      }
-    }
 
     const payload: CreateWorkoutRequest = {
       routineId: routine.id,
       routineName: routine.name,
       startedAt: startedAtISO,
-      completedAt: completedAtISO,
-      duration: durationSeconds,
+      completedAt: undefined,
+      duration: undefined,
       notes: notes.trim() ? notes.trim() : undefined,
       sets: flattenedSets
     }
@@ -421,8 +354,7 @@ const WorkoutStartPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="space-y-6">
+        <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -510,9 +442,6 @@ const WorkoutStartPage: React.FC = () => {
                               Repeticiones
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Técnica
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Descanso (seg)
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -547,27 +476,12 @@ const WorkoutStartPage: React.FC = () => {
                                     handleSetFieldChange(exerciseIndex, setIndex, 'reps', event.target.value)
                                   }
                                   className="input-field"
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <select
-                                  value={set.technique}
-                                  onChange={(event) =>
-                                    handleSetFieldChange(
-                                      exerciseIndex,
-                                      setIndex,
-                                      'technique',
-                                      event.target.value as Technique
-                                    )
+                                  placeholder={
+                                    exercise.targetRange
+                                      ? `Ej: ${exercise.targetRange}`
+                                      : 'Ingresa repeticiones'
                                   }
-                                  className="input-field"
-                                >
-                                  {TECHNIQUE_OPTIONS.map((techniqueOption) => (
-                                    <option key={techniqueOption} value={techniqueOption}>
-                                      {techniqueOption}
-                                    </option>
-                                  ))}
-                                </select>
+                                />
                               </td>
                               <td className="px-4 py-3">
                                 <input
@@ -602,60 +516,6 @@ const WorkoutStartPage: React.FC = () => {
                 ))}
 
                 <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Resumen del entrenamiento</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Inicio</label>
-                      <input
-                        type="datetime-local"
-                        value={startedAt}
-                        onChange={(event) => setStartedAt(event.target.value)}
-                        className="input-field"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2 pt-6 md:pt-8">
-                      <input
-                        id="markCompleted"
-                        type="checkbox"
-                        checked={markCompleted}
-                        onChange={(event) => handleMarkCompleted(event.target.checked)}
-                        className="h-4 w-4 text-primary-600"
-                      />
-                      <label htmlFor="markCompleted" className="text-sm text-gray-700 flex items-center">
-                        <CheckCircle2 className="h-4 w-4 mr-1 text-primary-600" />
-                        Marcar como completado
-                      </label>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Fin (opcional)
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={completedAt}
-                        onChange={(event) => setCompletedAt(event.target.value)}
-                        className="input-field"
-                        disabled={!markCompleted}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Duración (minutos, opcional)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={durationMinutes}
-                        onChange={(event) => setDurationMinutes(event.target.value)}
-                        className="input-field"
-                        placeholder="Calculada automáticamente si indicas el fin"
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notas (opcional)
@@ -696,38 +556,8 @@ const WorkoutStartPage: React.FC = () => {
               </form>
             )}
           </div>
-
-          <aside className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Resumen rápido</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  • Inicio previsto:{' '}
-                  <span className="font-medium text-gray-800">
-                    {new Date(startedAt).toLocaleString('es-ES', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short'
-                    })}
-                  </span>
-                </li>
-                <li>• Series registradas: {totalSets}</li>
-                <li>• Duración manual: {durationMinutes ? `${durationMinutes} min` : 'Pendiente'}</li>
-                <li>• Estado: {markCompleted ? 'Completado' : 'En progreso'}</li>
-              </ul>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Consejos para la sesión</h3>
-              <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
-                <li>Actualiza pesos y repeticiones apenas completes cada serie.</li>
-                <li>Usa el temporizador para respetar los descansos planificados.</li>
-                <li>Agrega notas al finalizar para recordar ajustes futuros.</li>
-              </ul>
-            </div>
-          </aside>
         </div>
       </div>
-    </div>
   )
 }
 
