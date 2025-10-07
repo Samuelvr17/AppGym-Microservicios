@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
+import VideoModal from '../components/VideoModal'
 import { routineService } from '../services/routineService'
 import { workoutService } from '../services/workoutService'
 import type { Routine, RoutineExercise, CreateWorkoutRequest } from '../types'
@@ -20,6 +21,8 @@ type ExerciseWorkoutForm = {
   exerciseId: number
   exerciseName: string
   targetRange?: string
+  exerciseDescription?: string
+  exerciseVideoPath?: string
   sets: WorkoutSetForm[]
 }
 
@@ -68,6 +71,12 @@ const WorkoutStartPage: React.FC = () => {
   const [startedAt] = useState(() => formatDateTimeLocal(new Date()))
   const [notes, setNotes] = useState('')
 
+  const [videoModalData, setVideoModalData] = useState<{
+    name: string
+    videoPath: string
+    description?: string
+  } | null>(null)
+
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [completedAt, setCompletedAt] = useState<Date | null>(null)
@@ -90,6 +99,8 @@ const WorkoutStartPage: React.FC = () => {
           data.exercises.map((exercise) => ({
             exerciseId: exercise.exerciseId,
             exerciseName: exercise.exerciseName,
+            exerciseDescription: exercise.exerciseDescription,
+            exerciseVideoPath: exercise.exerciseVideoPath,
             targetRange: getTargetRange(exercise),
             sets: Array.from({ length: exercise.sets }, () => ({
               weight: '',
@@ -139,6 +150,22 @@ const WorkoutStartPage: React.FC = () => {
   const handleTimerReset = () => {
     setIsTimerRunning(false)
     setTimerSeconds(0)
+  }
+
+  const handleOpenVideo = (exercise: ExerciseWorkoutForm) => {
+    if (!exercise.exerciseVideoPath) {
+      return
+    }
+
+    setVideoModalData({
+      name: exercise.exerciseName,
+      videoPath: exercise.exerciseVideoPath,
+      description: exercise.exerciseDescription,
+    })
+  }
+
+  const handleCloseVideo = () => {
+    setVideoModalData(null)
   }
 
   const handleWorkoutComplete = () => {
@@ -465,15 +492,28 @@ const WorkoutStartPage: React.FC = () => {
                           <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
                         </span>
                       </div>
+                      {exercise.exerciseDescription && (
+                        <p className="text-sm text-gray-600 mt-2">{exercise.exerciseDescription}</p>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAddSet(exerciseIndex)}
-                      className="btn-secondary flex items-center text-sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Añadir serie
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenVideo(exercise)}
+                        className="btn-secondary flex items-center text-sm justify-center"
+                        disabled={!exercise.exerciseVideoPath}
+                      >
+                        Ver video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSet(exerciseIndex)}
+                        className="btn-secondary flex items-center text-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Añadir serie
+                      </button>
+                    </div>
                   </div>
 
                     <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -604,8 +644,16 @@ const WorkoutStartPage: React.FC = () => {
               </form>
             )}
           </div>
-        </div>
       </div>
+
+      <VideoModal
+        isOpen={Boolean(videoModalData)}
+        title={videoModalData?.name ?? ''}
+        videoPath={videoModalData?.videoPath ?? ''}
+        description={videoModalData?.description}
+        onClose={handleCloseVideo}
+      />
+    </div>
   )
 }
 
