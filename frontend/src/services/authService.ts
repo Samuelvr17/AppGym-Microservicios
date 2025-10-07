@@ -1,5 +1,5 @@
 import { authApi } from './api'
-import type { AuthData, AuthResponse, LoginRequest, RegisterRequest, User } from '../types'
+import type { ApiResponse, AuthData, AuthResponse, LoginRequest, RegisterRequest, User } from '../types'
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthData> {
@@ -13,8 +13,8 @@ export const authService = {
   },
 
   async getProfile(): Promise<User> {
-    const response = await authApi.get<User>('/api/auth/profile')
-    return response.data
+    const { data } = await authApi.get<ApiResponse<User>>('/api/auth/profile')
+    return data.data
   },
 
   async verifyToken(token: string): Promise<{ valid: boolean; user?: User }> {

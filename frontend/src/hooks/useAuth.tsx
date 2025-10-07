@@ -21,15 +21,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       const token = authService.getToken()
       const savedUser = authService.getUser()
-      
+
       if (token && savedUser) {
+        setUser(savedUser)
+
         try {
           // Verify token is still valid
           const profile = await authService.getProfile()
           setUser(profile)
+          authService.saveUser(profile)
         } catch (error) {
           // Token expired or invalid
           authService.logout()
+          setUser(null)
         }
       }
       setIsLoading(false)
