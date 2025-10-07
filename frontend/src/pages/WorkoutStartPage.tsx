@@ -1,6 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle, Pause, Play, Plus, RotateCcw, Save, Timer, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  CheckCircle,
+  Pause,
+  Play,
+  PlayCircle,
+  Plus,
+  RotateCcw,
+  Save,
+  Timer,
+  Trash2
+} from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import VideoModal from '../components/VideoModal'
@@ -150,6 +161,18 @@ const WorkoutStartPage: React.FC = () => {
   const handleTimerReset = () => {
     setIsTimerRunning(false)
     setTimerSeconds(0)
+  }
+
+  const handleOpenVideo = (exercise: ExerciseWorkoutForm) => {
+    setVideoModalData({
+      name: exercise.exerciseName,
+      videoPath: exercise.exerciseVideoPath ?? '',
+      description: exercise.exerciseDescription
+    })
+  }
+
+  const handleCloseVideo = () => {
+    setVideoModalData(null)
   }
 
   const handleWorkoutComplete = () => {
@@ -466,9 +489,9 @@ const WorkoutStartPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {exercises.map((exercise, exerciseIndex) => (
                 <div key={exercise.exerciseId} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">{exercise.exerciseName}</h2>
+                  <div className="flex items-start justify-between mb-4 gap-4">
+                    <div className="min-w-0">
+                      <h2 className="text-xl font-semibold text-gray-900 truncate">{exercise.exerciseName}</h2>
                       <div className="text-sm text-gray-500 mt-1 space-x-3">
                         {exercise.targetRange && <span>Objetivo: {exercise.targetRange}</span>}
                         <span>
@@ -476,15 +499,30 @@ const WorkoutStartPage: React.FC = () => {
                           <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
                         </span>
                       </div>
+                      {exercise.exerciseDescription && (
+                        <p className="mt-2 text-sm text-gray-600 break-words">{exercise.exerciseDescription}</p>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAddSet(exerciseIndex)}
-                      className="btn-secondary flex items-center text-sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Añadir serie
-                    </button>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                      {(exercise.exerciseVideoPath || exercise.exerciseDescription) && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenVideo(exercise)}
+                          className="btn-secondary flex items-center text-sm"
+                        >
+                          <PlayCircle className="h-4 w-4 mr-1" />
+                          Ver guía
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleAddSet(exerciseIndex)}
+                        className="btn-secondary flex items-center text-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Añadir serie
+                      </button>
+                    </div>
                   </div>
 
                     <div className="overflow-x-auto -mx-4 sm:mx-0">
