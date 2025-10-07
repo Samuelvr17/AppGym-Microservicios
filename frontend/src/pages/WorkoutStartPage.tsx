@@ -152,22 +152,6 @@ const WorkoutStartPage: React.FC = () => {
     setTimerSeconds(0)
   }
 
-  const handleOpenVideo = (exercise: ExerciseWorkoutForm) => {
-    if (!exercise.exerciseVideoPath) {
-      return
-    }
-
-    setVideoModalData({
-      name: exercise.exerciseName,
-      videoPath: exercise.exerciseVideoPath,
-      description: exercise.exerciseDescription,
-    })
-  }
-
-  const handleCloseVideo = () => {
-    setVideoModalData(null)
-  }
-
   const handleWorkoutComplete = () => {
     const startedAtDate = new Date(startedAt)
     if (Number.isNaN(startedAtDate.getTime())) {
@@ -492,28 +476,15 @@ const WorkoutStartPage: React.FC = () => {
                           <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
                         </span>
                       </div>
-                      {exercise.exerciseDescription && (
-                        <p className="text-sm text-gray-600 mt-2">{exercise.exerciseDescription}</p>
-                      )}
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenVideo(exercise)}
-                        className="btn-secondary flex items-center text-sm justify-center"
-                        disabled={!exercise.exerciseVideoPath}
-                      >
-                        Ver video
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAddSet(exerciseIndex)}
-                        className="btn-secondary flex items-center text-sm"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Añadir serie
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddSet(exerciseIndex)}
+                      className="btn-secondary flex items-center text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Añadir serie
+                    </button>
                   </div>
 
                     <div className="overflow-x-auto -mx-4 sm:mx-0">
