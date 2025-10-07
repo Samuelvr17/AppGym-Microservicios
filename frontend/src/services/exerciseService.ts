@@ -82,4 +82,36 @@ export const exerciseService = {
   async deleteExercise(id: number): Promise<void> {
     await exerciseApi.delete(`/api/exercises/${id}`)
   },
+
+  async uploadExerciseVideo(id: number, file: File): Promise<Exercise> {
+    const formData = new FormData()
+    formData.append('video', file)
+
+    const response = await exerciseApi.post<ApiResponse<Exercise>>(
+      `/api/exercises/${id}/video`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    )
+
+    return response.data.data
+  },
+
+  async deleteExerciseVideo(id: number): Promise<void> {
+    await exerciseApi.delete(`/api/exercises/${id}/video`)
+  },
+
+  getExerciseVideoUrl(videoPath?: string | null): string | null {
+    if (!videoPath) {
+      return null
+    }
+
+    if (/^https?:\/\//i.test(videoPath)) {
+      return videoPath
+    }
+
+    const normalizedPath = videoPath.startsWith('/') ? videoPath : `/${videoPath}`
+    return `${window.location.origin}${normalizedPath}`
+  },
 }
