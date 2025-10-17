@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Usuario" as User
+actor "Administrador" as Admin
+
+rectangle "Sistema de Gestión de Entrenamientos" {
+  usecase "RF1. Registro de Usuarios" as RF1
+  usecase "RF2. Inicio y cierre de sesión" as RF2
+  usecase "RF3. Gestión de rutinas" as RF3
+  usecase "RF4. Registro de entrenamientos" as RF4
+  usecase "RF5. Historial y detalle de entrenamientos" as RF5
+  usecase "RF6. Panel de control" as RF6
+  usecase "RF7. Administración de ejercicios" as RF7
+  usecase "RF8. Búsqueda de Ejercicios" as RF8
+  usecase "RF9. Reproducción de Videos" as RF9
+
+  usecase "Listar rutinas" as RF3_1
+  usecase "Buscar rutinas" as RF3_2
+  usecase "Crear rutina" as RF3_3
+  usecase "Editar rutina" as RF3_4
+  usecase "Duplicar rutina" as RF3_5
+  usecase "Eliminar rutina" as RF3_6
+
+  usecase "Crear ejercicio" as RF7_1
+  usecase "Editar ejercicio" as RF7_2
+  usecase "Eliminar ejercicio" as RF7_3
+  usecase "Subir video" as RF7_4
+}
+
+User --> RF1
+User --> RF2
+User --> RF3
+User --> RF4
+User --> RF5
+User --> RF6
+User --> RF8
+User --> RF9
+
+Admin --|> User
+Admin --> RF7
+
+RF3 ..> RF3_1 : <<include>>
+RF3 ..> RF3_2 : <<include>>
+RF3 ..> RF3_3 : <<include>>
+RF3 ..> RF3_4 : <<include>>
+RF3 ..> RF3_5 : <<include>>
+RF3 ..> RF3_6 : <<include>>
+
+RF7 ..> RF7_1 : <<include>>
+RF7 ..> RF7_2 : <<include>>
+RF7 ..> RF7_3 : <<include>>
+RF7 ..> RF7_4 : <<include>>
+
+RF3 ..> RF8 : <<extend>>
+RF4 ..> RF8 : <<extend>>
+RF4 ..> RF9 : <<extend>>
+
+@enduml
