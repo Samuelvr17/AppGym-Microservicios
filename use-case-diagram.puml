@@ -1,60 +1,163 @@
-@startuml
+@startuml Use Case Diagram - Fitness Tracker
+
 left to right direction
 skinparam packageStyle rectangle
 
 actor "Usuario" as User
 actor "Administrador" as Admin
 
-rectangle "Sistema de Gestión de Entrenamientos" {
-  usecase "RF1. Registro de Usuarios" as RF1
-  usecase "RF2. Inicio y cierre de sesión" as RF2
-  usecase "RF3. Gestión de rutinas" as RF3
-  usecase "RF4. Registro de entrenamientos" as RF4
-  usecase "RF5. Historial y detalle de entrenamientos" as RF5
-  usecase "RF6. Panel de control" as RF6
-  usecase "RF7. Administración de ejercicios" as RF7
-  usecase "RF8. Búsqueda de Ejercicios" as RF8
-  usecase "RF9. Reproducción de Videos" as RF9
+rectangle "Sistema Fitness Tracker" {
 
-  usecase "Listar rutinas" as RF3_1
-  usecase "Buscar rutinas" as RF3_2
-  usecase "Crear rutina" as RF3_3
-  usecase "Editar rutina" as RF3_4
-  usecase "Duplicar rutina" as RF3_5
-  usecase "Eliminar rutina" as RF3_6
+  ' ===== Casos de Uso Compartidos =====
+  usecase "Iniciar Sesión" as UC_Login
+  usecase "Cerrar Sesión" as UC_Logout
+  usecase "Buscar Ejercicios" as UC_SearchExercises
+  usecase "Reproducir Video de Ejercicio" as UC_PlayVideo
 
-  usecase "Crear ejercicio" as RF7_1
-  usecase "Editar ejercicio" as RF7_2
-  usecase "Eliminar ejercicio" as RF7_3
-  usecase "Subir video" as RF7_4
+  ' ===== Casos de Uso del Usuario =====
+  usecase "Registrarse" as UC_Register
+  usecase "Gestionar Rutinas" as UC_ManageRoutines
+  usecase "Registrar Entrenamiento" as UC_RecordWorkout
+  usecase "Consultar Historial de Entrenamientos" as UC_ViewHistory
+  usecase "Ver Panel de Control" as UC_Dashboard
+
+  ' Casos de uso incluidos en Gestionar Rutinas
+  usecase "Listar Rutinas" as UC_ListRoutines
+  usecase "Crear Rutina" as UC_CreateRoutine
+  usecase "Editar Rutina" as UC_EditRoutine
+  usecase "Duplicar Rutina" as UC_DuplicateRoutine
+  usecase "Eliminar Rutina" as UC_DeleteRoutine
+
+  ' Casos de uso incluidos en Registrar Entrenamiento
+  usecase "Seleccionar Rutina" as UC_SelectRoutine
+  usecase "Registrar Series/Pesos/Repeticiones" as UC_RecordSets
+
+  ' Casos de uso incluidos en Consultar Historial
+  usecase "Ver Detalle de Entrenamiento" as UC_ViewWorkoutDetail
+
+  ' Casos de uso extendidos en Consultar Historial
+  usecase "Filtrar por Fecha" as UC_FilterByDate
+  usecase "Buscar Entrenamiento" as UC_SearchWorkout
+
+  ' Casos de uso incluidos en Panel de Control
+  usecase "Ver Métricas Agregadas" as UC_ViewMetrics
+  usecase "Ver Entrenamientos Recientes" as UC_ViewRecentWorkouts
+  usecase "Ver Rutinas Recientes" as UC_ViewRecentRoutines
+
+  ' ===== Casos de Uso del Administrador =====
+  usecase "Administrar Ejercicios" as UC_ManageExercises
+
+  ' Casos de uso incluidos en Administrar Ejercicios
+  usecase "Listar Ejercicios" as UC_ListExercises
+  usecase "Crear Ejercicio" as UC_CreateExercise
+  usecase "Editar Ejercicio" as UC_EditExercise
+  usecase "Eliminar Ejercicio" as UC_DeleteExercise
+
+  ' Casos de uso incluidos en Crear/Editar Ejercicio
+  usecase "Subir Video" as UC_UploadVideo
+  usecase "Agregar Aliases" as UC_AddAliases
+
+  ' Casos de uso extendidos en Crear/Editar Ejercicio
+  usecase "Usar URL de Video" as UC_UseVideoURL
+
+  ' ===== Relaciones del Usuario =====
+  User --> UC_Register
+  User --> UC_Login
+  User --> UC_Logout
+  User --> UC_ManageRoutines
+  User --> UC_RecordWorkout
+  User --> UC_ViewHistory
+  User --> UC_Dashboard
+  User --> UC_SearchExercises
+  User --> UC_PlayVideo
+
+  ' Relaciones include para Gestionar Rutinas
+  UC_ManageRoutines ..> UC_ListRoutines : <<include>>
+  UC_ManageRoutines ..> UC_CreateRoutine : <<include>>
+  UC_ManageRoutines ..> UC_EditRoutine : <<include>>
+  UC_ManageRoutines ..> UC_DuplicateRoutine : <<include>>
+  UC_ManageRoutines ..> UC_DeleteRoutine : <<include>>
+
+  ' Relaciones include para Crear/Editar Rutina
+  UC_CreateRoutine ..> UC_SearchExercises : <<include>>
+  UC_EditRoutine ..> UC_SearchExercises : <<include>>
+
+  ' Relaciones include para Registrar Entrenamiento
+  UC_RecordWorkout ..> UC_SelectRoutine : <<include>>
+  UC_RecordWorkout ..> UC_RecordSets : <<include>>
+
+  ' Relaciones extend para Registrar Entrenamiento
+  UC_PlayVideo .> UC_RecordWorkout : <<extend>>
+
+  ' Relaciones include para Consultar Historial
+  UC_ViewHistory ..> UC_ViewWorkoutDetail : <<include>>
+
+  ' Relaciones extend para Consultar Historial
+  UC_FilterByDate .> UC_ViewHistory : <<extend>>
+  UC_SearchWorkout .> UC_ViewHistory : <<extend>>
+
+  ' Relaciones include para Panel de Control
+  UC_Dashboard ..> UC_ViewMetrics : <<include>>
+  UC_Dashboard ..> UC_ViewRecentWorkouts : <<include>>
+  UC_Dashboard ..> UC_ViewRecentRoutines : <<include>>
+
+  ' ===== Relaciones del Administrador =====
+  Admin --> UC_Login
+  Admin --> UC_Logout
+  Admin --> UC_ManageExercises
+  Admin --> UC_SearchExercises
+  Admin --> UC_PlayVideo
+
+  ' Relaciones include para Administrar Ejercicios
+  UC_ManageExercises ..> UC_ListExercises : <<include>>
+  UC_ManageExercises ..> UC_CreateExercise : <<include>>
+  UC_ManageExercises ..> UC_EditExercise : <<include>>
+  UC_ManageExercises ..> UC_DeleteExercise : <<include>>
+
+  ' Relaciones include para Crear/Editar Ejercicio
+  UC_CreateExercise ..> UC_UploadVideo : <<include>>
+  UC_CreateExercise ..> UC_AddAliases : <<include>>
+  UC_EditExercise ..> UC_UploadVideo : <<include>>
+  UC_EditExercise ..> UC_AddAliases : <<include>>
+
+  ' Relaciones extend para Crear/Editar Ejercicio
+  UC_UseVideoURL .> UC_CreateExercise : <<extend>>
+  UC_UseVideoURL .> UC_EditExercise : <<extend>>
 }
 
-User --> RF1
-User --> RF2
-User --> RF3
-User --> RF4
-User --> RF5
-User --> RF6
-User --> RF8
-User --> RF9
+note right of UC_ManageRoutines
+  RF3: Gestión de rutinas
+  Permite CRUD completo
+end note
 
-Admin --|> User
-Admin --> RF7
+note right of UC_RecordWorkout
+  RF4: Registro de entrenamientos
+  Incluye series, pesos y reps
+end note
 
-RF3 ..> RF3_1 : <<include>>
-RF3 ..> RF3_2 : <<include>>
-RF3 ..> RF3_3 : <<include>>
-RF3 ..> RF3_4 : <<include>>
-RF3 ..> RF3_5 : <<include>>
-RF3 ..> RF3_6 : <<include>>
+note right of UC_ViewHistory
+  RF5: Historial de entrenamientos
+  Con filtros y búsqueda
+end note
 
-RF7 ..> RF7_1 : <<include>>
-RF7 ..> RF7_2 : <<include>>
-RF7 ..> RF7_3 : <<include>>
-RF7 ..> RF7_4 : <<include>>
+note right of UC_Dashboard
+  RF6: Panel de control
+  Métricas y accesos rápidos
+end note
 
-RF3 ..> RF8 : <<extend>>
-RF4 ..> RF8 : <<extend>>
-RF4 ..> RF9 : <<extend>>
+note right of UC_ManageExercises
+  RF7: Administración de ejercicios
+  Solo para administradores
+end note
+
+note right of UC_SearchExercises
+  RF8: Búsqueda de ejercicios
+  Por nombre o aliases
+end note
+
+note right of UC_PlayVideo
+  RF9: Reproducción de videos
+  Durante entrenamiento o vista previa
+end note
 
 @enduml
