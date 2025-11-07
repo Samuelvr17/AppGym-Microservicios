@@ -25,7 +25,6 @@ type WorkoutSetForm = {
   weight: string
   reps: string
   technique: Technique
-  restTime: string
 }
 
 type ExerciseWorkoutForm = {
@@ -35,6 +34,7 @@ type ExerciseWorkoutForm = {
   exerciseDescription?: string
   exerciseVideoPath?: string
   sets: WorkoutSetForm[]
+  notes: string
 }
 
 const formatDateTimeLocal = (date: Date) => {
@@ -52,17 +52,17 @@ const formatSeconds = (totalSeconds: number) => {
 const getTargetRange = (exercise: RoutineExercise) => {
   if (exercise.repRangeMin && exercise.repRangeMax) {
     if (exercise.repRangeMin === exercise.repRangeMax) {
-      return `${exercise.repRangeMin} repeticiones`
+      return `${exercise.repRangeMin} reps`
     }
-    return `${exercise.repRangeMin}-${exercise.repRangeMax} repeticiones`
+    return `${exercise.repRangeMin}-${exercise.repRangeMax} reps`
   }
 
   if (exercise.repRangeMin) {
-    return `≥ ${exercise.repRangeMin} repeticiones`
+    return `≥ ${exercise.repRangeMin} reps`
   }
 
   if (exercise.repRangeMax) {
-    return `≤ ${exercise.repRangeMax} repeticiones`
+    return `≤ ${exercise.repRangeMax} reps`
   }
 
   return undefined
@@ -80,7 +80,6 @@ const WorkoutStartPage: React.FC = () => {
   const [formError, setFormError] = useState('')
 
   const [startedAt] = useState(() => formatDateTimeLocal(new Date()))
-  const [notes, setNotes] = useState('')
 
   const [videoModalData, setVideoModalData] = useState<{
     name: string
@@ -116,12 +115,9 @@ const WorkoutStartPage: React.FC = () => {
             sets: Array.from({ length: exercise.sets }, () => ({
               weight: '',
               reps: '',
-              technique: exercise.technique,
-              restTime:
-                exercise.restTime !== null && exercise.restTime !== undefined
-                  ? String(exercise.restTime)
-                  : ''
-            }))
+              technique: exercise.technique
+            })),
+            notes: ''
           }))
         )
         setError('')
@@ -225,6 +221,21 @@ const WorkoutStartPage: React.FC = () => {
     )
   }
 
+  const handleExerciseNotesChange = (exerciseIndex: number, value: string) => {
+    setExercises((prev) =>
+      prev.map((exercise, exIdx) => {
+        if (exIdx !== exerciseIndex) {
+          return exercise
+        }
+
+        return {
+          ...exercise,
+          notes: value
+        }
+      })
+    )
+  }
+
   const handleAddSet = (exerciseIndex: number) => {
     setExercises((prev) =>
       prev.map((exercise, exIdx) => {
@@ -241,11 +252,7 @@ const WorkoutStartPage: React.FC = () => {
             {
               weight: '',
               reps: '',
-              technique: lastSet?.technique ?? (routine?.exercises[exIdx]?.technique ?? 'normal'),
-              restTime: lastSet?.restTime ??
-                (routine?.exercises[exIdx]?.restTime !== null && routine?.exercises[exIdx]?.restTime !== undefined
-                  ? String(routine?.exercises[exIdx]?.restTime)
-                  : '')
+              technique: lastSet?.technique ?? (routine?.exercises[exIdx]?.technique ?? 'normal')
             }
           ]
         }
@@ -299,8 +306,6 @@ const WorkoutStartPage: React.FC = () => {
         const set = exercise.sets[index]
         const repsValue = Number(set.reps)
         const weightValue = set.weight === '' ? undefined : Number(set.weight)
-        const restValue = set.restTime === '' ? undefined : Number(set.restTime)
-
         if (!Number.isFinite(repsValue) || repsValue < 1) {
           setFormError('Cada serie debe tener al menos 1 repetición.')
           return
@@ -311,19 +316,13 @@ const WorkoutStartPage: React.FC = () => {
           return
         }
 
-        if (restValue !== undefined && !Number.isFinite(restValue)) {
-          setFormError('El tiempo de descanso debe ser un número válido.')
-          return
-        }
-
         flattenedSets.push({
           exerciseId: exercise.exerciseId,
           exerciseName: exercise.exerciseName,
           setNumber: index + 1,
           weight: weightValue,
           reps: Math.round(repsValue),
-          technique: set.technique,
-          restTime: restValue !== undefined ? Math.round(restValue) : undefined
+          technique: set.technique
         })
       }
     }
@@ -351,13 +350,23 @@ const WorkoutStartPage: React.FC = () => {
       durationSeconds ??
       Math.max(0, Math.round((completedAt.getTime() - startedAtDate.getTime()) / 1000))
 
+    const exerciseNotes = exercises
+      .map((exercise) => exercise.notes.trim())
+      .map((note, index) => ({ note, name: exercises[index].exerciseName }))
+      .filter(({ note }) => note.length > 0)
+
+    const combinedNotes =
+      exerciseNotes.length > 0
+        ? exerciseNotes.map(({ name, note }) => `${name}: ${note}`).join('\n')
+        : undefined
+
     const payload: CreateWorkoutRequest = {
       routineId: routine.id,
       routineName: routine.name,
       startedAt: startedAtISO,
       completedAt: completedAtISO,
       duration: totalDurationSeconds,
-      notes: notes.trim() ? notes.trim() : undefined,
+      notes: combinedNotes,
       sets: flattenedSets
     }
 
@@ -493,27 +502,22 @@ const WorkoutStartPage: React.FC = () => {
                     <div className="min-w-0">
                       <h2 className="text-xl font-semibold text-gray-900 truncate">{exercise.exerciseName}</h2>
                       <div className="text-sm text-gray-500 mt-1 space-x-3">
-                        {exercise.targetRange && <span>Objetivo: {exercise.targetRange}</span>}
+                        {exercise.targetRange && <span>{exercise.targetRange}</span>}
                         <span>
-                          Técnica inicial:{' '}
+                          Técnica:{' '}
                           <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
                         </span>
                       </div>
-                      {exercise.exerciseDescription && (
-                        <p className="mt-2 text-sm text-gray-600 break-words">{exercise.exerciseDescription}</p>
-                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
-                      {(exercise.exerciseVideoPath || exercise.exerciseDescription) && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenVideo(exercise)}
-                          className="btn-secondary flex items-center text-sm"
-                        >
-                          <PlayCircle className="h-4 w-4 mr-1" />
-                          Ver guía
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenVideo(exercise)}
+                        className="btn-secondary flex items-center text-sm"
+                      >
+                        <PlayCircle className="h-4 w-4 mr-1" />
+                        Ver guía
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleAddSet(exerciseIndex)}
@@ -536,10 +540,7 @@ const WorkoutStartPage: React.FC = () => {
                               Peso (kg)
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Repeticiones
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Descanso (seg)
+                              Reps
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Acciones
@@ -560,7 +561,6 @@ const WorkoutStartPage: React.FC = () => {
                                     handleSetFieldChange(exerciseIndex, setIndex, 'weight', event.target.value)
                                   }
                                   className="input-field"
-                                  placeholder="Opcional"
                                 />
                               </td>
                               <td className="px-4 py-3">
@@ -573,24 +573,6 @@ const WorkoutStartPage: React.FC = () => {
                                     handleSetFieldChange(exerciseIndex, setIndex, 'reps', event.target.value)
                                   }
                                   className="input-field"
-                                  placeholder={
-                                    exercise.targetRange
-                                      ? `Ej: ${exercise.targetRange}`
-                                      : 'Ingresa repeticiones'
-                                  }
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="5"
-                                  value={set.restTime}
-                                  onChange={(event) =>
-                                    handleSetFieldChange(exerciseIndex, setIndex, 'restTime', event.target.value)
-                                  }
-                                  className="input-field"
-                                  placeholder="Opcional"
                                 />
                               </td>
                               <td className="px-4 py-3">
@@ -609,46 +591,41 @@ const WorkoutStartPage: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    <div className="mt-4">
+                      <textarea
+                        rows={3}
+                        value={exercise.notes}
+                        onChange={(event) => handleExerciseNotesChange(exerciseIndex, event.target.value)}
+                        className="input-field"
+                        placeholder="notas"
+                      />
+                    </div>
                   </div>
                 ))}
 
-                <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notas (opcional)
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={notes}
-                      onChange={(event) => setNotes(event.target.value)}
-                      className="input-field"
-                      placeholder="Registra observaciones importantes, sensaciones o ajustes para la próxima sesión."
-                    />
+                {formError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+                    {formError}
                   </div>
+                )}
 
-                  {formError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/dashboard')}
-                      className="btn-secondary"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-primary flex items-center"
-                      disabled={isSubmitting}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {isSubmitting ? 'Guardando...' : 'Guardar entrenamiento'}
-                    </button>
-                  </div>
+                <div className="flex flex-wrap justify-end gap-3 bg-white rounded-lg shadow-md p-6">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    className="btn-secondary"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary flex items-center"
+                    disabled={isSubmitting}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSubmitting ? 'Guardando...' : 'Guardar entrenamiento'}
+                  </button>
                 </div>
               </form>
             )}

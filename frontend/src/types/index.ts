@@ -57,7 +57,6 @@ export interface RoutineExercise {
   repRangeMin?: number
   repRangeMax?: number
   technique: 'normal' | 'dropset' | 'myo-reps' | 'failure' | 'rest-pause'
-  restTime?: number
   orderInRoutine: number
 }
 
@@ -86,7 +85,6 @@ export interface WorkoutSet {
   weight?: number
   reps: number
   technique: string
-  restTime?: number
   completedAt: string
 }
 

@@ -31,7 +31,6 @@ model RoutineExercise {
   repRangeMin     Int?    @map("rep_range_min")
   repRangeMax     Int?    @map("rep_range_max")
   technique       String  @default("normal") @db.VarChar(50)
-  restTime        Int?    @map("rest_time")
   orderInRoutine  Int     @map("order_in_routine")
   createdAt       DateTime @default(now()) @map("created_at")
 
