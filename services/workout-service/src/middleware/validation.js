@@ -48,11 +48,7 @@ const validateCreateWorkout = [
   body('sets.*.technique')
     .optional()
     .isIn(['normal', 'dropset', 'myo-reps', 'failure', 'rest-pause'])
-    .withMessage('Invalid technique'),
-  body('sets.*.restTime')
-    .optional()
-    .isInt({ min: 0, max: 3600 })
-    .withMessage('Rest time must be between 0 and 3600 seconds')
+    .withMessage('Invalid technique')
 ]
 
 // Validation rules for search

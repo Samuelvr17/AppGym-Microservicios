@@ -16,7 +16,6 @@ type RoutineExerciseForm = {
   repRangeMin?: number
   repRangeMax?: number
   technique: Technique
-  restTime?: number
 }
 
 const TECHNIQUE_OPTIONS: Technique[] = ['normal', 'dropset', 'myo-reps', 'failure', 'rest-pause']
@@ -61,8 +60,7 @@ const RoutineFormPage: React.FC = () => {
           sets: exercise.sets,
           repRangeMin: exercise.repRangeMin ?? undefined,
           repRangeMax: exercise.repRangeMax ?? undefined,
-          technique: exercise.technique,
-          restTime: exercise.restTime ?? undefined,
+          technique: exercise.technique
         })),
       )
     } catch (err: any) {
@@ -118,7 +116,6 @@ const RoutineFormPage: React.FC = () => {
         repRangeMin: undefined,
         repRangeMax: undefined,
         technique: 'normal',
-        restTime: undefined,
       },
     ])
   }
@@ -170,10 +167,6 @@ const RoutineFormPage: React.FC = () => {
 
         if (field === 'repRangeMax') {
           return { ...exercise, repRangeMax: numericValue }
-        }
-
-        if (field === 'restTime') {
-          return { ...exercise, restTime: numericValue }
         }
 
         return exercise
@@ -243,10 +236,6 @@ const RoutineFormPage: React.FC = () => {
 
         if (exercise.repRangeMax !== undefined) {
           baseExercise.repRangeMax = exercise.repRangeMax
-        }
-
-        if (exercise.restTime !== undefined) {
-          baseExercise.restTime = exercise.restTime
         }
 
         return baseExercise
@@ -515,18 +504,6 @@ const RoutineFormPage: React.FC = () => {
                             </option>
                           ))}
                         </select>
-                      </div>
-                      <div className="md:col-span-2 lg:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Descanso (segundos)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={exercise.restTime ?? ''}
-                          onChange={(event) => handleExerciseFieldChange(index, 'restTime', event.target.value)}
-                          className="input-field mt-1"
-                        />
                       </div>
                     </div>
                   </div>

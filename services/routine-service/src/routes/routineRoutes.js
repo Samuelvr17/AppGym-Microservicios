@@ -213,7 +213,6 @@ router.post('/', authenticateToken, validateCreateRoutine, async (req, res) => {
           repRangeMin: exercise.repRangeMin,
           repRangeMax: exercise.repRangeMax,
           technique: exercise.technique || 'normal',
-          restTime: exercise.restTime,
           orderInRoutine: exercise.orderInRoutine
         }))
       })
@@ -333,7 +332,6 @@ router.put('/:id', authenticateToken, validateUpdateRoutine, async (req, res) =>
             repRangeMin: exercise.repRangeMin,
             repRangeMax: exercise.repRangeMax,
             technique: exercise.technique || 'normal',
-            restTime: exercise.restTime,
             orderInRoutine: exercise.orderInRoutine
           }))
         })
@@ -460,7 +458,6 @@ router.post('/:id/duplicate', authenticateToken, async (req, res) => {
             repRangeMin: exercise.repRangeMin,
             repRangeMax: exercise.repRangeMax,
             technique: exercise.technique,
-            restTime: exercise.restTime,
             orderInRoutine: exercise.orderInRoutine
           }))
         })

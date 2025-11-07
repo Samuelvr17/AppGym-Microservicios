@@ -178,7 +178,6 @@ router.post('/', authenticateToken, validateCreateWorkout, async (req, res) => {
           weight: set.weight,
           reps: set.reps,
           technique: set.technique || 'normal',
-          restTime: set.restTime,
           completedAt: set.completedAt ? new Date(set.completedAt) : new Date()
         }))
       })

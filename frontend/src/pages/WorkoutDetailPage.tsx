@@ -44,14 +44,6 @@ const formatDuration = (seconds?: number) => {
   return `${remainingSeconds}s`
 }
 
-const formatRestTime = (seconds?: number) => {
-  if (seconds === undefined || seconds === null) return '—'
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`
-}
-
 const calculateVolume = (set: WorkoutSet) => {
   if (set.weight === undefined || set.weight === null) return 0
   return set.weight * set.reps
@@ -253,12 +245,6 @@ const WorkoutDetailPage: React.FC = () => {
                             <div className="text-sm text-gray-500">
                               Técnica: <span className="text-gray-900 font-medium capitalize">{set.technique}</span>
                             </div>
-                            {set.restTime !== undefined && (
-                              <div className="flex items-center text-sm text-gray-500">
-                                <Clock className="h-4 w-4 mr-1" />
-                                Descanso: <span className="ml-1 text-gray-900 font-medium">{formatRestTime(set.restTime)}</span>
-                              </div>
-                            )}
                             {calculateVolume(set) > 0 && (
                               <div className="flex items-center text-sm text-gray-500">
                                 <Dumbbell className="h-4 w-4 mr-1" />

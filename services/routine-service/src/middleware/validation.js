@@ -32,10 +32,6 @@ const validateCreateRoutine = [
     .optional()
     .isIn(['normal', 'dropset', 'myo-reps', 'failure', 'rest-pause'])
     .withMessage('Invalid technique'),
-  body('exercises.*.restTime')
-    .optional()
-    .isInt({ min: 0, max: 600 })
-    .withMessage('Rest time must be between 0 and 600 seconds'),
   body('exercises.*.orderInRoutine')
     .isInt({ min: 1 })
     .withMessage('Order in routine must be a positive integer')
@@ -77,10 +73,6 @@ const validateUpdateRoutine = [
     .optional()
     .isIn(['normal', 'dropset', 'myo-reps', 'failure', 'rest-pause'])
     .withMessage('Invalid technique'),
-  body('exercises.*.restTime')
-    .optional()
-    .isInt({ min: 0, max: 600 })
-    .withMessage('Rest time must be between 0 and 600 seconds'),
   body('exercises.*.orderInRoutine')
     .optional()
     .isInt({ min: 1 })
