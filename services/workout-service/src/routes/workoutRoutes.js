@@ -97,10 +97,16 @@ router.get('/', authenticateToken, validateSearch, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params
-    
+
+    const workoutId = Number.parseInt(id, 10)
+
+    if (!Number.isInteger(workoutId)) {
+      return errorResponse(res, 'Invalid workout ID', 400)
+    }
+
     const workout = await prisma.workout.findUnique({
-      where: { 
-        id: parseInt(id),
+      where: {
+        id: workoutId,
         userId: req.user.userId // Ensure user owns the workout
       },
       include: {

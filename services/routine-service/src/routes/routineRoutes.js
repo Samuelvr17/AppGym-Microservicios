@@ -106,10 +106,16 @@ router.get('/', authenticateToken, validateSearch, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params
-    
+
+    const routineId = Number.parseInt(id, 10)
+
+    if (!Number.isInteger(routineId)) {
+      return errorResponse(res, 'Invalid routine ID', 400)
+    }
+
     const routine = await prisma.routine.findUnique({
-      where: { 
-        id: parseInt(id),
+      where: {
+        id: routineId,
         userId: req.user.userId // Ensure user owns the routine
       },
       include: {
