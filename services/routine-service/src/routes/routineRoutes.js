@@ -52,16 +52,18 @@ router.get('/', authenticateToken, validateSearch, async (req, res) => {
         
         if (exerciseIds.length > 0) {
           try {
-            const exerciseDetails = await exerciseService.getExercises(exerciseIds)
-            
+            const { exercises: exerciseDetails, missingExerciseIds } = await exerciseService.getExercises(exerciseIds)
+            const missingExerciseIdsSet = new Set(missingExerciseIds)
+
             // Merge exercise details with routine exercise data
             const exercisesWithDetails = routine.exercises.map(routineEx => {
               const exerciseDetail = exerciseDetails.find(ex => ex.id === routineEx.exerciseId)
+              const isMissing = missingExerciseIdsSet.has(routineEx.exerciseId)
               return {
                 ...routineEx,
-                exerciseName: exerciseDetail?.name || 'Unknown Exercise',
-                exerciseDescription: exerciseDetail?.description,
-                exerciseVideoPath: exerciseDetail?.videoPath
+                exerciseName: isMissing ? 'Exercise not found' : (exerciseDetail?.name || 'Unknown Exercise'),
+                exerciseDescription: isMissing ? null : exerciseDetail?.description,
+                exerciseVideoPath: isMissing ? null : exerciseDetail?.videoPath
               }
             })
 
@@ -134,16 +136,18 @@ router.get('/:id', authenticateToken, async (req, res) => {
     
     if (exerciseIds.length > 0) {
       try {
-        const exerciseDetails = await exerciseService.getExercises(exerciseIds)
-        
+        const { exercises: exerciseDetails, missingExerciseIds } = await exerciseService.getExercises(exerciseIds)
+        const missingExerciseIdsSet = new Set(missingExerciseIds)
+
         // Merge exercise details with routine exercise data
         const exercisesWithDetails = routine.exercises.map(routineEx => {
           const exerciseDetail = exerciseDetails.find(ex => ex.id === routineEx.exerciseId)
+          const isMissing = missingExerciseIdsSet.has(routineEx.exerciseId)
           return {
             ...routineEx,
-            exerciseName: exerciseDetail?.name || 'Unknown Exercise',
-            exerciseDescription: exerciseDetail?.description,
-            exerciseVideoPath: exerciseDetail?.videoPath
+            exerciseName: isMissing ? 'Exercise not found' : (exerciseDetail?.name || 'Unknown Exercise'),
+            exerciseDescription: isMissing ? null : exerciseDetail?.description,
+            exerciseVideoPath: isMissing ? null : exerciseDetail?.videoPath
           }
         })
 
@@ -236,16 +240,18 @@ router.post('/', authenticateToken, validateCreateRoutine, async (req, res) => {
 
     // Get exercise details for response
     try {
-      const exerciseDetails = await exerciseService.getExercises(exerciseIds)
-      
+      const { exercises: exerciseDetails, missingExerciseIds } = await exerciseService.getExercises(exerciseIds)
+      const missingExerciseIdsSet = new Set(missingExerciseIds)
+
       // Merge exercise details with routine exercise data
       const exercisesWithDetails = routine.exercises.map(routineEx => {
         const exerciseDetail = exerciseDetails.find(ex => ex.id === routineEx.exerciseId)
+        const isMissing = missingExerciseIdsSet.has(routineEx.exerciseId)
         return {
           ...routineEx,
-          exerciseName: exerciseDetail?.name || 'Unknown Exercise',
-          exerciseDescription: exerciseDetail?.description,
-          exerciseVideoPath: exerciseDetail?.videoPath
+          exerciseName: isMissing ? 'Exercise not found' : (exerciseDetail?.name || 'Unknown Exercise'),
+          exerciseDescription: isMissing ? null : exerciseDetail?.description,
+          exerciseVideoPath: isMissing ? null : exerciseDetail?.videoPath
         }
       })
 
@@ -359,16 +365,18 @@ router.put('/:id', authenticateToken, validateUpdateRoutine, async (req, res) =>
     
     if (exerciseIds.length > 0) {
       try {
-        const exerciseDetails = await exerciseService.getExercises(exerciseIds)
-        
+        const { exercises: exerciseDetails, missingExerciseIds } = await exerciseService.getExercises(exerciseIds)
+        const missingExerciseIdsSet = new Set(missingExerciseIds)
+
         // Merge exercise details with routine exercise data
         const exercisesWithDetails = updatedRoutine.exercises.map(routineEx => {
           const exerciseDetail = exerciseDetails.find(ex => ex.id === routineEx.exerciseId)
+          const isMissing = missingExerciseIdsSet.has(routineEx.exerciseId)
           return {
             ...routineEx,
-            exerciseName: exerciseDetail?.name || 'Unknown Exercise',
-            exerciseDescription: exerciseDetail?.description,
-            exerciseVideoPath: exerciseDetail?.videoPath
+            exerciseName: isMissing ? 'Exercise not found' : (exerciseDetail?.name || 'Unknown Exercise'),
+            exerciseDescription: isMissing ? null : exerciseDetail?.description,
+            exerciseVideoPath: isMissing ? null : exerciseDetail?.videoPath
           }
         })
 

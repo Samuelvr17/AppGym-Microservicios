@@ -30,7 +30,10 @@ class ExerciseService {
       const response = await axios.get(`${this.baseURL}/api/exercises/${exerciseId}`)
       return response.data.data
     } catch (error) {
-      throw new Error(`Failed to get exercise: ${error.message}`)
+      if (error.response?.status === 404) {
+        return null
+      }
+      throw error
     }
   }
 
@@ -39,7 +42,7 @@ class ExerciseService {
     try {
       const verificationPromises = exerciseIds.map(id => this.verifyExercise(id))
       const results = await Promise.all(verificationPromises)
-      
+
       const invalidExercises = results
         .map((result, index) => ({ ...result, id: exerciseIds[index] }))
         .filter(result => !result.exists)
@@ -57,9 +60,23 @@ class ExerciseService {
   // Get exercise details for multiple exercises
   async getExercises(exerciseIds) {
     try {
-      const exercisePromises = exerciseIds.map(id => this.getExercise(id))
-      const exercises = await Promise.all(exercisePromises)
-      return exercises
+      const missingExerciseIdsSet = new Set()
+
+      const exercisePromises = exerciseIds.map(async (id) => {
+        const exercise = await this.getExercise(id)
+        if (!exercise) {
+          missingExerciseIdsSet.add(id)
+        }
+        return exercise
+      })
+
+      const exerciseResults = await Promise.all(exercisePromises)
+      const exercises = exerciseResults.filter(Boolean)
+
+      return {
+        exercises,
+        missingExerciseIds: Array.from(missingExerciseIdsSet)
+      }
     } catch (error) {
       throw new Error(`Failed to get exercises: ${error.message}`)
     }
