@@ -100,10 +100,18 @@ const WorkoutStartPage: React.FC = () => {
       return
     }
 
+    const numericRoutineId = Number(routineId)
+
+    if (Number.isNaN(numericRoutineId) || !Number.isInteger(numericRoutineId)) {
+      setError('No se proporcionó una rutina válida.')
+      setIsLoading(false)
+      return
+    }
+
     const loadRoutine = async () => {
       try {
         setIsLoading(true)
-        const data = await routineService.getRoutine(Number(routineId))
+        const data = await routineService.getRoutine(numericRoutineId)
         setRoutine(data)
         setExercises(
           data.exercises.map((exercise) => ({
