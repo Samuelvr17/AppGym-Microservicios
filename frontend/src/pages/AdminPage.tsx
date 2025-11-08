@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Edit, Plus, Save, Search, Trash2, X } from 'lucide-react'
+import { Edit, PlayCircle, Save, Search, Trash2, X } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import { exerciseService } from '../services/exerciseService'
@@ -17,7 +17,7 @@ const defaultFormState: ExerciseFormState = {
   name: '',
   description: '',
   videoPath: '',
-  aliases: '',
+  aliases: ''
 }
 
 const AdminPage: React.FC = () => {
@@ -88,7 +88,7 @@ const AdminPage: React.FC = () => {
       name: formState.name.trim(),
       description: formState.description.trim() || undefined,
       videoPath: formState.videoPath.trim() || undefined,
-      aliases: parseAliases(formState.aliases),
+      aliases: parseAliases(formState.aliases)
     }
 
     try {
@@ -122,7 +122,7 @@ const AdminPage: React.FC = () => {
       name: exercise.name,
       description: exercise.description || '',
       videoPath: exercise.videoPath || '',
-      aliases: exercise.aliases.join(', '),
+      aliases: exercise.aliases.join(', ')
     })
     setVideoFile(null)
     if (videoInputRef.current) {
@@ -169,7 +169,7 @@ const AdminPage: React.FC = () => {
   if (user?.role !== 'admin') {
     return (
       <div className="px-4 py-16">
-        <div className="max-w-xl mx-auto bg-white border border-gray-200 rounded-lg shadow-sm p-8 text-center">
+        <div className="max-w-xl mx-auto card-surface p-8 text-center">
           <h1 className="text-2xl font-semibold text-gray-900 mb-4">Acceso restringido</h1>
           <p className="text-gray-600">
             Necesitas permisos de administrador para acceder a esta sección.
@@ -180,56 +180,70 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="px-4 py-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Administrar Ejercicios</h1>
-            <p className="text-gray-600 mt-2">
-              Gestiona el catálogo de ejercicios disponibles en la plataforma.
+    <div className="py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto space-y-6 px-4 sm:px-0">
+        <header className="space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Administrar Ejercicios</h1>
+            <p className="text-sm text-gray-600 sm:text-base">
+              Gestiona y mantiene actualizado el catálogo de ejercicios disponibles en la plataforma.
             </p>
           </div>
-          <div className="w-full md:w-80">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar por nombre o alias..."
-                className="input-field pl-10"
-              />
+          <div className="card-surface p-4 sm:p-5">
+            <label htmlFor="exercise-search" className="sr-only">
+              Buscar ejercicios
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  id="exercise-search"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Buscar por nombre o alias..."
+                  className="input-field pl-11"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="btn-secondary sm:w-40"
+              >
+                <X className="h-4 w-4" />
+                Limpiar selección
+              </button>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {selectedExercise ? 'Editar ejercicio' : 'Crear nuevo ejercicio'}
-              </h2>
-              {selectedExercise ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <section className="card-surface p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {selectedExercise ? 'Editar ejercicio' : 'Crear nuevo ejercicio'}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Completa los datos para que el equipo pueda encontrarlo fácilmente.
+                </p>
+              </div>
+              {selectedExercise && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
                 >
-                  <X className="h-4 w-4 mr-1" />
-                  Cancelar
+                  <X className="h-4 w-4" />
+                  Cancelar edición
                 </button>
-              ) : (
-                <span className="inline-flex items-center text-sm text-gray-500">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Nuevo
-                </span>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Nombre
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-3">
+                <label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                  Nombre del ejercicio
                 </label>
                 <input
                   id="name"
@@ -243,55 +257,57 @@ const AdminPage: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Descripción
+              <div className="space-y-3">
+                <label htmlFor="description" className="text-sm font-semibold text-gray-700">
+                  Descripción y notas técnicas
                 </label>
                 <textarea
                   id="description"
                   name="description"
                   value={formState.description}
                   onChange={handleInputChange}
-                  className="input-field min-h-[120px]"
-                  placeholder="Detalles, consejos o técnica del ejercicio"
+                  className="input-field min-h-[140px] resize-y"
+                  placeholder="Añade consejos, variaciones o puntos clave de la técnica"
                 />
               </div>
 
-              <div>
-                <label htmlFor="videoPath" className="block text-sm font-medium text-gray-700">
-                  URL del video (opcional)
-                </label>
-                <input
-                  id="videoPath"
-                  name="videoPath"
-                  type="url"
-                  value={formState.videoPath}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="https://..."
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-3">
+                  <label htmlFor="videoPath" className="text-sm font-semibold text-gray-700">
+                    URL del video (opcional)
+                  </label>
+                  <input
+                    id="videoPath"
+                    name="videoPath"
+                    type="url"
+                    value={formState.videoPath}
+                    onChange={handleInputChange}
+                    className="input-field"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label htmlFor="videoFile" className="text-sm font-semibold text-gray-700">
+                    Subir video (opcional)
+                  </label>
+                  <input
+                    id="videoFile"
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoFileChange}
+                    className="input-field"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Si subes un archivo, reemplazará al video existente. También puedes usar solo la URL.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="videoFile" className="block text-sm font-medium text-gray-700">
-                  Subir video (opcional)
-                </label>
-                <input
-                  id="videoFile"
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoFileChange}
-                  className="input-field"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Si cargas un archivo, reemplazará al video existente. También puedes usar solo la URL.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="aliases" className="block text-sm font-medium text-gray-700">
-                  Aliases
+              <div className="space-y-3">
+                <label htmlFor="aliases" className="text-sm font-semibold text-gray-700">
+                  Aliases o nombres alternativos
                 </label>
                 <input
                   id="aliases"
@@ -302,39 +318,48 @@ const AdminPage: React.FC = () => {
                   className="input-field"
                   placeholder="Separar por comas (ej. press plano, bench press)"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Separa cada alias con una coma. Puedes dejar este campo vacío.
+                <p className="text-xs text-gray-500">
+                  Ayuda a que los usuarios encuentren el ejercicio utilizando diferentes términos.
                 </p>
               </div>
 
               {formError && <ErrorMessage message={formError} />}
 
-              <button
-                type="submit"
-                disabled={isSubmitting || isUploadingVideo}
-                className="btn-primary w-full flex items-center justify-center"
-              >
-                {isSubmitting || isUploadingVideo ? (
-                  <LoadingSpinner size="sm" className="mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                {isUploadingVideo
-                  ? 'Subiendo video...'
-                  : selectedExercise
-                    ? 'Guardar cambios'
-                    : 'Crear ejercicio'}
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="btn-secondary sm:w-auto"
+                >
+                  Reiniciar formulario
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isUploadingVideo}
+                  className="btn-primary flex items-center justify-center gap-2 sm:w-auto"
+                >
+                  {isSubmitting || isUploadingVideo ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {isUploadingVideo
+                    ? 'Subiendo video...'
+                    : selectedExercise
+                      ? 'Guardar cambios'
+                      : 'Crear ejercicio'}
+                </button>
+              </div>
               {isUploadingVideo && (
-                <p className="flex items-center text-xs text-gray-500">
-                  <LoadingSpinner size="sm" className="mr-2" />
+                <p className="flex items-center gap-2 text-xs text-gray-500">
+                  <LoadingSpinner size="sm" />
                   Procesando el video, por favor espera...
                 </p>
               )}
             </form>
-          </div>
+          </section>
 
-          <div className="space-y-4">
+          <section className="space-y-4">
             {error && <ErrorMessage message={error} onRetry={loadExercises} />}
 
             {isLoading ? (
@@ -342,15 +367,15 @@ const AdminPage: React.FC = () => {
                 <LoadingSpinner size="lg" />
               </div>
             ) : filteredExercises.length > 0 ? (
-              <div className="grid gap-4">
+              <div className="space-y-4">
                 {filteredExercises.map((exercise) => (
-                  <div key={exercise.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-2">
-                        <div>
+                  <article key={exercise.id} className="card-surface p-5 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+                      <div className="space-y-3">
+                        <div className="space-y-1">
                           <h3 className="text-lg font-semibold text-gray-900">{exercise.name}</h3>
                           {exercise.description && (
-                            <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
+                            <p className="text-sm text-gray-600 leading-relaxed">{exercise.description}</p>
                           )}
                         </div>
                         {exercise.aliases.length > 0 && (
@@ -358,7 +383,7 @@ const AdminPage: React.FC = () => {
                             {exercise.aliases.map((alias) => (
                               <span
                                 key={alias}
-                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
+                                className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
                               >
                                 {alias}
                               </span>
@@ -370,36 +395,37 @@ const AdminPage: React.FC = () => {
                             href={exerciseService.getExerciseVideoUrl(exercise.videoPath) ?? undefined}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-sm text-primary-600 hover:text-primary-700"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
                           >
+                            <PlayCircle className="h-4 w-4" />
                             Ver video
                           </a>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:w-44">
                         <button
                           type="button"
                           onClick={() => handleEdit(exercise)}
-                          className="btn-secondary flex items-center justify-center"
+                          className="btn-secondary flex items-center justify-center gap-2"
                         >
-                          <Edit className="h-4 w-4 mr-1" />
+                          <Edit className="h-4 w-4" />
                           Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleDelete(exercise)}
-                          className="inline-flex items-center justify-center border border-red-200 hover:border-red-300 text-red-600 hover:text-red-700 rounded-lg py-2 px-4 transition-colors duration-200"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
+                          <Trash2 className="h-4 w-4" />
                           Eliminar
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-10 text-center">
+              <div className="card-surface p-10 text-center">
                 <div className="text-5xl mb-4">📋</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {searchTerm ? 'No se encontraron ejercicios' : 'Aún no hay ejercicios creados'}
@@ -411,7 +437,7 @@ const AdminPage: React.FC = () => {
                 </p>
               </div>
             )}
-          </div>
+          </section>
         </div>
       </div>
     </div>

@@ -419,225 +419,301 @@ const WorkoutStartPage: React.FC = () => {
   }
 
   return (
-    <div className="px-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <Link
-              to="/routines"
-              className="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 mb-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Volver a rutinas
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">{routine.name}</h1>
+    <div className="py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto space-y-6 px-0">
+        <div className="space-y-3 px-4 sm:px-0">
+          <Link
+            to="/routines"
+            className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Volver a rutinas
+          </Link>
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{routine.name}</h1>
             {routine.description && (
-              <p className="text-gray-600 mt-2 max-w-2xl">{routine.description}</p>
+              <p className="text-base text-gray-600 max-w-2xl">{routine.description}</p>
             )}
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-500">
               {routine.exercises.length} ejercicios · {totalSets} series planificadas
             </p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Timer className="h-5 w-5 text-primary-600 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-900">Temporizador de descanso</h2>
+        <div className="space-y-6 px-4 sm:px-0">
+          <section className="card-surface p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                  <Timer className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Temporizador de descanso</h2>
+                  <p className="text-sm text-gray-500">Controla tus pausas entre series sin salir de la vista.</p>
+                </div>
               </div>
-              <span className="font-mono text-xl text-gray-800">{formatSeconds(timerSeconds)}</span>
+              <span className="font-mono text-2xl text-gray-800 tabular-nums">{formatSeconds(timerSeconds)}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
               <button
                 type="button"
                 onClick={handleTimerStart}
-                className="btn-primary flex items-center text-sm"
+                className="btn-primary flex items-center justify-center gap-2 text-sm"
                 disabled={isTimerRunning}
               >
-                <Play className="h-4 w-4 mr-1" />
+                <Play className="h-4 w-4" />
                 Iniciar
               </button>
               <button
                 type="button"
                 onClick={handleTimerPause}
-                className="btn-secondary flex items-center text-sm"
+                className="btn-secondary flex items-center justify-center gap-2 text-sm"
                 disabled={!isTimerRunning}
               >
-                <Pause className="h-4 w-4 mr-1" />
+                <Pause className="h-4 w-4" />
                 Pausar
               </button>
               <button
                 type="button"
                 onClick={handleTimerReset}
-                className="btn-secondary flex items-center text-sm"
+                className="btn-secondary flex items-center justify-center gap-2 text-sm"
               >
-                <RotateCcw className="h-4 w-4 mr-1" />
+                <RotateCcw className="h-4 w-4" />
                 Reiniciar
               </button>
               <button
                 type="button"
                 onClick={handleWorkoutComplete}
-                className="btn-primary flex items-center text-sm"
+                className="btn-primary flex items-center justify-center gap-2 text-sm col-span-2 sm:col-span-1"
               >
-                <CheckCircle className="h-4 w-4 mr-1" />
+                <CheckCircle className="h-4 w-4" />
                 {workoutCompleted ? 'Actualizar finalización' : 'Finalizar entrenamiento'}
               </button>
             </div>
             {durationSeconds !== null && completedAt && (
-              <p className="mt-3 text-sm text-green-700">
+              <p className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
                 Duración registrada: {formatSeconds(durationSeconds)} · Fin: {completedAt.toLocaleString()}
               </p>
             )}
-          </div>
+          </section>
 
           {exercises.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="card-surface p-8 text-center">
               <p className="text-gray-600">Esta rutina no tiene ejercicios configurados.</p>
-              <Link
-                to={`/routines/${routine.id}`}
-                className="btn-primary inline-flex items-center text-sm mt-4"
-              >
+              <Link to={`/routines/${routine.id}`} className="btn-primary inline-flex items-center gap-2 text-sm mt-4">
+                <Plus className="h-4 w-4" />
                 Configurar rutina
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
               {exercises.map((exercise, exerciseIndex) => (
-                <div key={exercise.exerciseId} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-start justify-between mb-4 gap-4">
-                    <div className="min-w-0">
-                      <h2 className="text-xl font-semibold text-gray-900 truncate">{exercise.exerciseName}</h2>
-                      <div className="text-sm text-gray-500 mt-1 space-x-3">
-                        {exercise.targetRange && <span>{exercise.targetRange}</span>}
-                        <span>
-                          Técnica:{' '}
-                          <span className="capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
+                <section key={exercise.exerciseId} className="card-surface p-5 sm:p-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600 text-sm font-semibold">
+                          {exerciseIndex + 1}
+                        </span>
+                        <h2 className="text-xl font-semibold text-gray-900 leading-tight">
+                          {exercise.exerciseName}
+                        </h2>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                        {exercise.targetRange && (
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                            {exercise.targetRange}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                          Técnica: <span className="ml-1 capitalize">{exercises[exerciseIndex].sets[0]?.technique ?? 'normal'}</span>
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {exercise.sets.length} serie{exercise.sets.length > 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => handleOpenVideo(exercise)}
-                        className="btn-secondary flex items-center text-sm"
+                        className="btn-secondary flex items-center justify-center gap-2 text-sm"
                       >
-                        <PlayCircle className="h-4 w-4 mr-1" />
+                        <PlayCircle className="h-4 w-4" />
                         Ver guía
                       </button>
                       <button
                         type="button"
                         onClick={() => handleAddSet(exerciseIndex)}
-                        className="btn-secondary flex items-center text-sm"
+                        className="btn-secondary flex items-center justify-center gap-2 text-sm"
                       >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="h-4 w-4" />
                         Añadir serie
                       </button>
                     </div>
                   </div>
 
-                    <div className="overflow-x-auto -mx-4 sm:mx-0">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Serie
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Peso (kg)
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Reps
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Acciones
-                            </th>
+                  <div className="hidden md:block -mx-5 sm:mx-0 overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Serie
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Peso (kg)
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Reps
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {exercise.sets.map((set, setIndex) => (
+                          <tr key={`${exercise.exerciseId}-${setIndex}`} className="text-sm text-gray-700">
+                            <td className="px-6 py-3 font-medium">{setIndex + 1}</td>
+                            <td className="px-6 py-3">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={set.weight}
+                                onChange={(event) => handleSetFieldChange(exerciseIndex, setIndex, 'weight', event.target.value)}
+                                className="input-field"
+                              />
+                            </td>
+                            <td className="px-6 py-3">
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={set.reps}
+                                onChange={(event) => handleSetFieldChange(exerciseIndex, setIndex, 'reps', event.target.value)}
+                                className="input-field"
+                              />
+                            </td>
+                            <td className="px-6 py-3">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSet(exerciseIndex, setIndex)}
+                                className="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                                disabled={exercise.sets.length <= 1}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Quitar
+                              </button>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {exercise.sets.map((set, setIndex) => (
-                            <tr key={`${exercise.exerciseId}-${setIndex}`}>
-                              <td className="px-4 py-3 text-sm text-gray-700">{setIndex + 1}</td>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.5"
-                                  value={set.weight}
-                                  onChange={(event) =>
-                                    handleSetFieldChange(exerciseIndex, setIndex, 'weight', event.target.value)
-                                  }
-                                  className="input-field"
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <input
-                                  type="number"
-                                  min="1"
-                                  step="1"
-                                  value={set.reps}
-                                  onChange={(event) =>
-                                    handleSetFieldChange(exerciseIndex, setIndex, 'reps', event.target.value)
-                                  }
-                                  className="input-field"
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveSet(exerciseIndex, setIndex)}
-                                  className="inline-flex items-center text-sm text-red-600 hover:text-red-700"
-                                  disabled={exercise.sets.length <= 1}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-1" />
-                                  Quitar
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-4">
-                      <textarea
-                        rows={3}
-                        value={exercise.notes}
-                        onChange={(event) => handleExerciseNotesChange(exerciseIndex, event.target.value)}
-                        className="input-field"
-                        placeholder="notas"
-                      />
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
 
-                {formError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-                    {formError}
+                  <div className="space-y-3 md:hidden">
+                    {exercise.sets.map((set, setIndex) => {
+                      const weightInputId = `exercise-${exercise.exerciseId}-set-${setIndex}-weight`
+                      const repsInputId = `exercise-${exercise.exerciseId}-set-${setIndex}-reps`
+                      return (
+                        <div
+                          key={`${exercise.exerciseId}-mobile-${setIndex}`}
+                          className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-700">Serie {setIndex + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSet(exerciseIndex, setIndex)}
+                              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
+                              disabled={exercise.sets.length <= 1}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Quitar
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3">
+                            <label htmlFor={weightInputId} className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                              Peso (kg)
+                              <input
+                                id={weightInputId}
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.5"
+                                value={set.weight}
+                                onChange={(event) =>
+                                  handleSetFieldChange(exerciseIndex, setIndex, 'weight', event.target.value)
+                                }
+                                className="input-field mt-1"
+                              />
+                            </label>
+                            <label htmlFor={repsInputId} className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                              Repeticiones
+                              <input
+                                id={repsInputId}
+                                type="number"
+                                inputMode="numeric"
+                                min="1"
+                                step="1"
+                                value={set.reps}
+                                onChange={(event) =>
+                                  handleSetFieldChange(exerciseIndex, setIndex, 'reps', event.target.value)
+                                }
+                                className="input-field mt-1"
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )}
 
-                <div className="flex flex-wrap justify-end gap-3 bg-white rounded-lg shadow-md p-6">
+                  <div className="space-y-2">
+                    <label htmlFor={`notes-${exercise.exerciseId}`} className="text-sm font-medium text-gray-700">
+                      Notas del ejercicio
+                    </label>
+                    <textarea
+                      id={`notes-${exercise.exerciseId}`}
+                      rows={3}
+                      value={exercise.notes}
+                      onChange={(event) => handleExerciseNotesChange(exerciseIndex, event.target.value)}
+                      className="input-field resize-y"
+                      placeholder="Registra sensaciones, ajustes de técnica o recordatorios para la siguiente sesión"
+                    />
+                  </div>
+                </section>
+              ))}
+
+              {formError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {formError}
+                </div>
+              )}
+
+              <div className="md:flex md:justify-end">
+                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur md:static md:border-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-0 md:flex md:gap-3">
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard')}
-                    className="btn-secondary"
+                    className="btn-secondary w-full md:w-auto"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary flex items-center"
+                    className="btn-primary mt-3 w-full md:mt-0 md:w-auto flex items-center justify-center gap-2"
                     disabled={isSubmitting}
                   >
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-4 w-4" />
                     {isSubmitting ? 'Guardando...' : 'Guardar entrenamiento'}
                   </button>
                 </div>
-              </form>
-            )}
-          </div>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
 
       <VideoModal
