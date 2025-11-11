@@ -5,6 +5,38 @@ class ExerciseService {
     this.baseURL = process.env.EXERCISE_SERVICE_URL || 'http://localhost:3002'
   }
 
+  async delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  async getExerciseWithRetry(exerciseId, maxRetries = 3) {
+    let attempt = 0
+
+    while (attempt <= maxRetries) {
+      try {
+        return await this.getExercise(exerciseId)
+      } catch (error) {
+        const status = error.response?.status
+
+        if (status === 429 && attempt < maxRetries) {
+          const retryAfterHeader = error.response?.headers?.['retry-after']
+          const retryAfter = Number(retryAfterHeader)
+          const backoff = Number.isFinite(retryAfter)
+            ? retryAfter * 1000
+            : Math.pow(2, attempt) * 200
+
+          attempt += 1
+          await this.delay(backoff)
+          continue
+        }
+
+        throw error
+      }
+    }
+
+    throw new Error('Failed to retrieve exercise after retries')
+  }
+
   // Verify that an exercise exists
   async verifyExercise(exerciseId) {
     try {
@@ -61,17 +93,18 @@ class ExerciseService {
   async getExercises(exerciseIds) {
     try {
       const missingExerciseIdsSet = new Set()
+      const exercises = []
 
-      const exercisePromises = exerciseIds.map(async (id) => {
-        const exercise = await this.getExercise(id)
+      for (const id of exerciseIds) {
+        const exercise = await this.getExerciseWithRetry(id)
+
         if (!exercise) {
           missingExerciseIdsSet.add(id)
+          continue
         }
-        return exercise
-      })
 
-      const exerciseResults = await Promise.all(exercisePromises)
-      const exercises = exerciseResults.filter(Boolean)
+        exercises.push(exercise)
+      }
 
       return {
         exercises,
