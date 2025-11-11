@@ -129,14 +129,16 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, title, videoPath, descr
                 </div>
               </div>
             ) : (
-              <video
-                ref={videoRef}
-                controls
-                className="w-full rounded-xl border border-gray-200"
-                src={resolvedVideoSrc}
-              >
-                Tu navegador no soporta la reproducción de video.
-              </video>
+              <div className="flex justify-center">
+                <video
+                  ref={videoRef}
+                  controls
+                  className="max-h-[65vh] w-auto max-w-full rounded-xl border border-gray-200 object-contain"
+                  src={resolvedVideoSrc}
+                >
+                  Tu navegador no soporta la reproducción de video.
+                </video>
+              </div>
             )
           ) : (
             <p className="text-sm text-gray-600">No hay video disponible para este ejercicio.</p>
