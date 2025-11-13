@@ -93,6 +93,247 @@ router.get('/', authenticateToken, validateSearch, async (req, res) => {
   }
 })
 
+// Workout statistics must be declared before the dynamic :id route to avoid conflicts
+// Get user workout statistics
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const { period = '30' } = req.query // days
+    const periodDays = parseInt(period)
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - periodDays)
+
+    const [
+      totalWorkouts,
+      completedWorkouts,
+      totalSets,
+      totalReps,
+      totalWeight,
+      avgDuration,
+      recentWorkouts
+    ] = await Promise.all([
+      // Total workouts
+      prisma.workout.count({
+        where: { userId: req.user.userId }
+      }),
+      // Completed workouts
+      prisma.workout.count({
+        where: {
+          userId: req.user.userId,
+          completedAt: { not: null }
+        }
+      }),
+      // Total sets
+      prisma.workoutSet.count({
+        where: {
+          workout: {
+            userId: req.user.userId
+          }
+        }
+      }),
+      // Total reps
+      prisma.workoutSet.aggregate({
+        where: {
+          workout: {
+            userId: req.user.userId
+          }
+        },
+        _sum: {
+          reps: true
+        }
+      }),
+      // Total weight lifted
+      prisma.workoutSet.aggregate({
+        where: {
+          workout: {
+            userId: req.user.userId
+          },
+          weight: { not: null }
+        },
+        _sum: {
+          weight: true
+        }
+      }),
+      // Average duration
+      prisma.workout.aggregate({
+        where: {
+          userId: req.user.userId,
+          duration: { not: null }
+        },
+        _avg: {
+          duration: true
+        }
+      }),
+      // Recent workouts in period
+      prisma.workout.count({
+        where: {
+          userId: req.user.userId,
+          startedAt: { gte: startDate }
+        }
+      })
+    ])
+
+    return successResponse(res, {
+      totalWorkouts,
+      completedWorkouts,
+      incompleteWorkouts: totalWorkouts - completedWorkouts,
+      totalSets,
+      totalReps: totalReps._sum.reps || 0,
+      totalWeightLifted: totalWeight._sum.weight || 0,
+      avgDurationMinutes: avgDuration._avg.duration ? Math.round(avgDuration._avg.duration / 60) : 0,
+      recentWorkouts,
+      period: `${periodDays} days`
+    }, 'Workout statistics retrieved successfully')
+
+  } catch (error) {
+    console.error('Get workout stats error:', error)
+    return errorResponse(res, 'Failed to get workout statistics')
+  }
+})
+
+// Get workout summary by exercise
+router.get('/stats/exercises', authenticateToken, async (req, res) => {
+  try {
+    const { period = '30' } = req.query
+    const periodDays = parseInt(period)
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - periodDays)
+
+    const exerciseStats = await prisma.workoutSet.groupBy({
+      by: ['exerciseId', 'exerciseName'],
+      where: {
+        workout: {
+          userId: req.user.userId,
+          startedAt: { gte: startDate }
+        }
+      },
+      _count: {
+        id: true
+      },
+      _sum: {
+        reps: true,
+        weight: true
+      },
+      _avg: {
+        weight: true
+      },
+      _max: {
+        weight: true
+      },
+      orderBy: {
+        _count: {
+          id: 'desc'
+        }
+      }
+    })
+
+    const formattedStats = exerciseStats.map(stat => ({
+      exerciseId: stat.exerciseId,
+      exerciseName: stat.exerciseName,
+      totalSets: stat._count.id,
+      totalReps: stat._sum.reps || 0,
+      totalWeight: stat._sum.weight || 0,
+      avgWeight: stat._avg.weight ? parseFloat(stat._avg.weight.toFixed(2)) : 0,
+      maxWeight: stat._max.weight || 0
+    }))
+
+    return successResponse(res, {
+      exercises: formattedStats,
+      period: `${periodDays} days`
+    }, 'Exercise statistics retrieved successfully')
+
+  } catch (error) {
+    console.error('Get exercise stats error:', error)
+    return errorResponse(res, 'Failed to get exercise statistics')
+  }
+})
+
+// Get workout progress for specific exercise
+router.get('/progress/:exerciseId', authenticateToken, async (req, res) => {
+  try {
+    const { exerciseId } = req.params
+    const { limit = 10 } = req.query
+
+    const progressData = await prisma.workoutSet.findMany({
+      where: {
+        exerciseId: parseInt(exerciseId),
+        workout: {
+          userId: req.user.userId,
+          completedAt: { not: null }
+        }
+      },
+      select: {
+        weight: true,
+        reps: true,
+        completedAt: true,
+        workout: {
+          select: {
+            startedAt: true,
+            routineName: true
+          }
+        }
+      },
+      orderBy: { completedAt: 'desc' },
+      take: parseInt(limit)
+    })
+
+    // Calculate progress metrics
+    const progressMetrics = progressData.map(set => ({
+      date: set.workout.startedAt,
+      routineName: set.workout.routineName,
+      weight: set.weight,
+      reps: set.reps,
+      volume: set.weight ? parseFloat((set.weight * set.reps).toFixed(2)) : 0
+    }))
+
+    return successResponse(res, {
+      exerciseId: parseInt(exerciseId),
+      progress: progressMetrics
+    }, 'Exercise progress retrieved successfully')
+
+  } catch (error) {
+    console.error('Get exercise progress error:', error)
+    return errorResponse(res, 'Failed to get exercise progress')
+  }
+})
+
+// Get recent workouts (last 5)
+router.get('/recent', authenticateToken, async (req, res) => {
+  try {
+    const recentWorkouts = await prisma.workout.findMany({
+      where: { userId: req.user.userId },
+      include: {
+        sets: {
+          select: {
+            exerciseName: true,
+            weight: true,
+            reps: true
+          }
+        }
+      },
+      orderBy: { startedAt: 'desc' },
+      take: 5
+    })
+
+    // Format for quick overview
+    const formattedWorkouts = recentWorkouts.map(workout => ({
+      id: workout.id,
+      routineName: workout.routineName,
+      startedAt: workout.startedAt,
+      completedAt: workout.completedAt,
+      duration: workout.duration,
+      totalSets: workout.sets.length,
+      exercises: [...new Set(workout.sets.map(set => set.exerciseName))],
+      isCompleted: !!workout.completedAt
+    }))
+
+    return successResponse(res, formattedWorkouts, 'Recent workouts retrieved successfully')
+
+  } catch (error) {
+    console.error('Get recent workouts error:', error)
+    return errorResponse(res, 'Failed to get recent workouts')
+  }
+})
+
 // Get workout by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
@@ -124,7 +365,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 
     return successResponse(res, workout, 'Workout retrieved successfully')
-    
+
   } catch (error) {
     console.error('Get workout error:', error)
     return errorResponse(res, 'Failed to retrieve workout')
@@ -282,246 +523,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Delete workout error:', error)
     return errorResponse(res, 'Failed to delete workout')
-  }
-})
-
-// Get user workout statistics
-router.get('/stats', authenticateToken, async (req, res) => {
-  try {
-    const { period = '30' } = req.query // days
-    const periodDays = parseInt(period)
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - periodDays)
-
-    const [
-      totalWorkouts,
-      completedWorkouts,
-      totalSets,
-      totalReps,
-      totalWeight,
-      avgDuration,
-      recentWorkouts
-    ] = await Promise.all([
-      // Total workouts
-      prisma.workout.count({
-        where: { userId: req.user.userId }
-      }),
-      // Completed workouts
-      prisma.workout.count({
-        where: { 
-          userId: req.user.userId,
-          completedAt: { not: null }
-        }
-      }),
-      // Total sets
-      prisma.workoutSet.count({
-        where: {
-          workout: {
-            userId: req.user.userId
-          }
-        }
-      }),
-      // Total reps
-      prisma.workoutSet.aggregate({
-        where: {
-          workout: {
-            userId: req.user.userId
-          }
-        },
-        _sum: {
-          reps: true
-        }
-      }),
-      // Total weight lifted
-      prisma.workoutSet.aggregate({
-        where: {
-          workout: {
-            userId: req.user.userId
-          },
-          weight: { not: null }
-        },
-        _sum: {
-          weight: true
-        }
-      }),
-      // Average duration
-      prisma.workout.aggregate({
-        where: {
-          userId: req.user.userId,
-          duration: { not: null }
-        },
-        _avg: {
-          duration: true
-        }
-      }),
-      // Recent workouts in period
-      prisma.workout.count({
-        where: {
-          userId: req.user.userId,
-          startedAt: { gte: startDate }
-        }
-      })
-    ])
-
-    return successResponse(res, {
-      totalWorkouts,
-      completedWorkouts,
-      incompleteWorkouts: totalWorkouts - completedWorkouts,
-      totalSets,
-      totalReps: totalReps._sum.reps || 0,
-      totalWeightLifted: totalWeight._sum.weight || 0,
-      avgDurationMinutes: avgDuration._avg.duration ? Math.round(avgDuration._avg.duration / 60) : 0,
-      recentWorkouts,
-      period: `${periodDays} days`
-    }, 'Workout statistics retrieved successfully')
-    
-  } catch (error) {
-    console.error('Get workout stats error:', error)
-    return errorResponse(res, 'Failed to get workout statistics')
-  }
-})
-
-// Get workout summary by exercise
-router.get('/stats/exercises', authenticateToken, async (req, res) => {
-  try {
-    const { period = '30' } = req.query
-    const periodDays = parseInt(period)
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - periodDays)
-
-    const exerciseStats = await prisma.workoutSet.groupBy({
-      by: ['exerciseId', 'exerciseName'],
-      where: {
-        workout: {
-          userId: req.user.userId,
-          startedAt: { gte: startDate }
-        }
-      },
-      _count: {
-        id: true
-      },
-      _sum: {
-        reps: true,
-        weight: true
-      },
-      _avg: {
-        weight: true
-      },
-      _max: {
-        weight: true
-      },
-      orderBy: {
-        _count: {
-          id: 'desc'
-        }
-      }
-    })
-
-    const formattedStats = exerciseStats.map(stat => ({
-      exerciseId: stat.exerciseId,
-      exerciseName: stat.exerciseName,
-      totalSets: stat._count.id,
-      totalReps: stat._sum.reps || 0,
-      totalWeight: stat._sum.weight || 0,
-      avgWeight: stat._avg.weight ? parseFloat(stat._avg.weight.toFixed(2)) : 0,
-      maxWeight: stat._max.weight || 0
-    }))
-
-    return successResponse(res, {
-      exercises: formattedStats,
-      period: `${periodDays} days`
-    }, 'Exercise statistics retrieved successfully')
-    
-  } catch (error) {
-    console.error('Get exercise stats error:', error)
-    return errorResponse(res, 'Failed to get exercise statistics')
-  }
-})
-
-// Get workout progress for specific exercise
-router.get('/progress/:exerciseId', authenticateToken, async (req, res) => {
-  try {
-    const { exerciseId } = req.params
-    const { limit = 10 } = req.query
-
-    const progressData = await prisma.workoutSet.findMany({
-      where: {
-        exerciseId: parseInt(exerciseId),
-        workout: {
-          userId: req.user.userId,
-          completedAt: { not: null }
-        }
-      },
-      select: {
-        weight: true,
-        reps: true,
-        completedAt: true,
-        workout: {
-          select: {
-            startedAt: true,
-            routineName: true
-          }
-        }
-      },
-      orderBy: { completedAt: 'desc' },
-      take: parseInt(limit)
-    })
-
-    // Calculate progress metrics
-    const progressMetrics = progressData.map(set => ({
-      date: set.workout.startedAt,
-      routineName: set.workout.routineName,
-      weight: set.weight,
-      reps: set.reps,
-      volume: set.weight ? parseFloat((set.weight * set.reps).toFixed(2)) : 0
-    }))
-
-    return successResponse(res, {
-      exerciseId: parseInt(exerciseId),
-      progress: progressMetrics
-    }, 'Exercise progress retrieved successfully')
-    
-  } catch (error) {
-    console.error('Get exercise progress error:', error)
-    return errorResponse(res, 'Failed to get exercise progress')
-  }
-})
-
-// Get recent workouts (last 5)
-router.get('/recent', authenticateToken, async (req, res) => {
-  try {
-    const recentWorkouts = await prisma.workout.findMany({
-      where: { userId: req.user.userId },
-      include: {
-        sets: {
-          select: {
-            exerciseName: true,
-            weight: true,
-            reps: true
-          }
-        }
-      },
-      orderBy: { startedAt: 'desc' },
-      take: 5
-    })
-
-    // Format for quick overview
-    const formattedWorkouts = recentWorkouts.map(workout => ({
-      id: workout.id,
-      routineName: workout.routineName,
-      startedAt: workout.startedAt,
-      completedAt: workout.completedAt,
-      duration: workout.duration,
-      totalSets: workout.sets.length,
-      exercises: [...new Set(workout.sets.map(set => set.exerciseName))],
-      isCompleted: !!workout.completedAt
-    }))
-
-    return successResponse(res, formattedWorkouts, 'Recent workouts retrieved successfully')
-    
-  } catch (error) {
-    console.error('Get recent workouts error:', error)
-    return errorResponse(res, 'Failed to get recent workouts')
   }
 })
 
