@@ -9,12 +9,32 @@ class ExerciseService {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  async getExerciseWithRetry(exerciseId, maxRetries = 3) {
+  async fetchExercisesBatch(exerciseIds, maxRetries = 3) {
+    if (!Array.isArray(exerciseIds) || exerciseIds.length === 0) {
+      return {
+        exerciseMap: new Map(),
+        missingExerciseIds: []
+      }
+    }
+
+    const uniqueIds = Array.from(new Set(exerciseIds))
     let attempt = 0
 
     while (attempt <= maxRetries) {
       try {
-        return await this.getExercise(exerciseId)
+        const response = await axios.get(`${this.baseURL}/api/exercises/batch`, {
+          params: {
+            ids: uniqueIds.join(',')
+          }
+        })
+
+        const { exercises = [], missingExerciseIds = [] } = response.data.data || {}
+        const exerciseMap = new Map(exercises.map(exercise => [exercise.id, exercise]))
+
+        return {
+          exerciseMap,
+          missingExerciseIds
+        }
       } catch (error) {
         const status = error.response?.status
 
@@ -34,7 +54,7 @@ class ExerciseService {
       }
     }
 
-    throw new Error('Failed to retrieve exercise after retries')
+    throw new Error('Failed to retrieve exercises after retries')
   }
 
   // Verify that an exercise exists
@@ -72,17 +92,11 @@ class ExerciseService {
   // Verify multiple exercises exist
   async verifyExercises(exerciseIds) {
     try {
-      const verificationPromises = exerciseIds.map(id => this.verifyExercise(id))
-      const results = await Promise.all(verificationPromises)
-
-      const invalidExercises = results
-        .map((result, index) => ({ ...result, id: exerciseIds[index] }))
-        .filter(result => !result.exists)
-        .map(result => result.id)
+      const { missingExerciseIds } = await this.fetchExercisesBatch(exerciseIds)
 
       return {
-        allValid: invalidExercises.length === 0,
-        invalidExercises
+        allValid: missingExerciseIds.length === 0,
+        invalidExercises: missingExerciseIds
       }
     } catch (error) {
       throw new Error(`Failed to verify exercises: ${error.message}`)
@@ -92,23 +106,15 @@ class ExerciseService {
   // Get exercise details for multiple exercises
   async getExercises(exerciseIds) {
     try {
-      const missingExerciseIdsSet = new Set()
-      const exercises = []
+      const { exerciseMap, missingExerciseIds } = await this.fetchExercisesBatch(exerciseIds)
 
-      for (const id of exerciseIds) {
-        const exercise = await this.getExerciseWithRetry(id)
-
-        if (!exercise) {
-          missingExerciseIdsSet.add(id)
-          continue
-        }
-
-        exercises.push(exercise)
-      }
+      const exercises = exerciseIds
+        .map(id => exerciseMap.get(id))
+        .filter(exercise => Boolean(exercise))
 
       return {
         exercises,
-        missingExerciseIds: Array.from(missingExerciseIdsSet)
+        missingExerciseIds
       }
     } catch (error) {
       throw new Error(`Failed to get exercises: ${error.message}`)

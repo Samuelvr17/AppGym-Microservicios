@@ -18,9 +18,23 @@ class ExerciseService {
   // Get exercise details for multiple exercises
   async getExercises(exerciseIds) {
     try {
-      const exercisePromises = exerciseIds.map(id => this.getExercise(id))
-      const exercises = await Promise.all(exercisePromises)
-      return exercises
+      if (!Array.isArray(exerciseIds) || exerciseIds.length === 0) {
+        return []
+      }
+
+      const uniqueIds = Array.from(new Set(exerciseIds))
+      const response = await axios.get(`${this.baseURL}/api/exercises/batch`, {
+        params: {
+          ids: uniqueIds.join(',')
+        }
+      })
+
+      const { exercises = [] } = response.data.data || {}
+      const exerciseMap = new Map(exercises.map(exercise => [exercise.id, exercise]))
+
+      return exerciseIds
+        .map(id => exerciseMap.get(id))
+        .filter(exercise => Boolean(exercise))
     } catch (error) {
       throw new Error(`Failed to get exercises: ${error.message}`)
     }
