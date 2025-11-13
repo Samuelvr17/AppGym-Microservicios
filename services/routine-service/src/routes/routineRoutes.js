@@ -104,6 +104,47 @@ router.get('/', authenticateToken, validateSearch, async (req, res) => {
   }
 })
 
+// Get user routine statistics
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const [totalRoutines, totalExercises, avgExercisesPerRoutine] = await Promise.all([
+      prisma.routine.count({
+        where: { userId: req.user.userId }
+      }),
+      prisma.routineExercise.count({
+        where: {
+          routine: {
+            userId: req.user.userId
+          }
+        }
+      }),
+      prisma.routineExercise.aggregate({
+        where: {
+          routine: {
+            userId: req.user.userId
+          }
+        },
+        _avg: {
+          sets: true
+        }
+      })
+    ])
+
+    const avgSetsPerExercise = avgExercisesPerRoutine._avg.sets || 0
+
+    return successResponse(res, {
+      totalRoutines,
+      totalExercises,
+      avgExercisesPerRoutine: totalRoutines > 0 ? (totalExercises / totalRoutines).toFixed(1) : 0,
+      avgSetsPerExercise: avgSetsPerExercise.toFixed(1)
+    }, 'Routine statistics retrieved successfully')
+
+  } catch (error) {
+    console.error('Get routine stats error:', error)
+    return errorResponse(res, 'Failed to get routine statistics')
+  }
+})
+
 // Get routine by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
@@ -493,47 +534,6 @@ router.post('/:id/duplicate', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Duplicate routine error:', error)
     return errorResponse(res, 'Failed to duplicate routine')
-  }
-})
-
-// Get user routine statistics
-router.get('/stats', authenticateToken, async (req, res) => {
-  try {
-    const [totalRoutines, totalExercises, avgExercisesPerRoutine] = await Promise.all([
-      prisma.routine.count({
-        where: { userId: req.user.userId }
-      }),
-      prisma.routineExercise.count({
-        where: {
-          routine: {
-            userId: req.user.userId
-          }
-        }
-      }),
-      prisma.routineExercise.aggregate({
-        where: {
-          routine: {
-            userId: req.user.userId
-          }
-        },
-        _avg: {
-          sets: true
-        }
-      })
-    ])
-
-    const avgSetsPerExercise = avgExercisesPerRoutine._avg.sets || 0
-
-    return successResponse(res, {
-      totalRoutines,
-      totalExercises,
-      avgExercisesPerRoutine: totalRoutines > 0 ? (totalExercises / totalRoutines).toFixed(1) : 0,
-      avgSetsPerExercise: avgSetsPerExercise.toFixed(1)
-    }, 'Routine statistics retrieved successfully')
-    
-  } catch (error) {
-    console.error('Get routine stats error:', error)
-    return errorResponse(res, 'Failed to get routine statistics')
   }
 })
 
