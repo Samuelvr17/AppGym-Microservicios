@@ -186,8 +186,7 @@ const WorkoutDetailPage: React.FC = () => {
                           <thead>
                             <tr className="text-xs uppercase tracking-wide text-gray-400">
                               <th className="w-24 pb-2 pr-4 font-medium text-gray-500">Serie</th>
-                              <th className="pb-2 pr-4 font-medium text-gray-500">Técnica</th>
-                              <th className="w-24 pb-2 pr-4 font-medium text-gray-500">Peso</th>
+                              <th className="w-28 pb-2 pr-4 font-medium text-gray-500">Peso</th>
                               <th className="w-24 pb-2 font-medium text-gray-500">Reps</th>
                             </tr>
                           </thead>
@@ -195,7 +194,6 @@ const WorkoutDetailPage: React.FC = () => {
                             {sets.map((set) => (
                               <tr key={set.id} className="align-top">
                                 <td className="py-3 pr-4 text-gray-900">#{set.setNumber}</td>
-                                <td className="py-3 pr-4 capitalize text-gray-900">{set.technique}</td>
                                 <td className="py-3 pr-4 text-gray-900">
                                   {set.weight !== undefined && set.weight !== null ? `${set.weight} kg` : '—'}
                                 </td>
