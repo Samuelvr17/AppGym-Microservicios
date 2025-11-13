@@ -62,8 +62,34 @@ const validateSearch = [
     .withMessage('Limit must be between 1 and 100')
 ]
 
+const validateBatchRequest = [
+  query('ids')
+    .exists({ checkFalsy: true })
+    .withMessage('ids query parameter is required')
+    .bail()
+    .custom(value => {
+      const ids = value.split(',').map(id => id.trim())
+
+      if (ids.length === 0) {
+        throw new Error('At least one id must be provided')
+      }
+
+      const invalidId = ids.find(id => {
+        const parsed = Number.parseInt(id, 10)
+        return !Number.isInteger(parsed) || parsed <= 0
+      })
+
+      if (invalidId) {
+        throw new Error('ids must be a comma-separated list of positive integers')
+      }
+
+      return true
+    })
+]
+
 module.exports = {
   validateCreateExercise,
   validateUpdateExercise,
-  validateSearch
+  validateSearch,
+  validateBatchRequest
 }

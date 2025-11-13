@@ -2,7 +2,7 @@ const express = require('express')
 const { validationResult } = require('express-validator')
 const { prisma } = require('../config/database')
 const { authenticateToken, requireAdmin } = require('../middleware/auth')
-const { validateCreateExercise, validateUpdateExercise, validateSearch } = require('../middleware/validation')
+const { validateCreateExercise, validateUpdateExercise, validateSearch, validateBatchRequest } = require('../middleware/validation')
 const { uploadVideo, handleUploadError } = require('../middleware/upload')
 const { successResponse, errorResponse, validationErrorResponse } = require('../utils/responseHelper')
 const path = require('path')
@@ -81,6 +81,55 @@ router.get('/', validateSearch, async (req, res) => {
     
   } catch (error) {
     console.error('Get exercises error:', error)
+    return errorResponse(res, 'Failed to retrieve exercises')
+  }
+})
+
+// Get multiple exercises by IDs
+router.get('/batch', validateBatchRequest, async (req, res) => {
+  try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return validationErrorResponse(res, errors)
+    }
+
+    const idsParam = req.query.ids
+    const idList = idsParam.split(',').map(id => parseInt(id, 10))
+    const uniqueIds = Array.from(new Set(idList))
+
+    const exercises = await prisma.exercise.findMany({
+      where: { id: { in: uniqueIds } },
+      include: {
+        aliases: {
+          select: {
+            alias: true
+          }
+        }
+      }
+    })
+
+    const exerciseMap = new Map(
+      exercises.map(exercise => [
+        exercise.id,
+        {
+          ...exercise,
+          aliases: exercise.aliases.map(a => a.alias)
+        }
+      ])
+    )
+
+    const missingExerciseIds = uniqueIds.filter(id => !exerciseMap.has(id))
+
+    const formattedExercises = uniqueIds
+      .map(id => exerciseMap.get(id))
+      .filter(Boolean)
+
+    return successResponse(res, {
+      exercises: formattedExercises,
+      missingExerciseIds
+    }, 'Exercises retrieved successfully')
+  } catch (error) {
+    console.error('Get exercises batch error:', error)
     return errorResponse(res, 'Failed to retrieve exercises')
   }
 })
