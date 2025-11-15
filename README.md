@@ -57,4 +57,3 @@ AppGym-Microservicios/
 
 - Los videos de ejercicios se almacenan localmente en `services/exercise-service/uploads/`.
 - Los puertos por defecto son: Auth 3001, Exercise 3002, Routine 3003, Workout 3004 y Frontend 5173.
-- No se utiliza Docker; el entorno está pensado para ejecutarse de forma local.
